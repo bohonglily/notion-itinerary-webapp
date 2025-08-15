@@ -1,29 +1,76 @@
 /**
  * Vercel API Route - Notion Database Info
- * 使用統一的 Handler 和平台適配器
+ * 純 JavaScript 實作，避免 TypeScript 模組導入問題
  */
 
-import { NotionDatabaseInfoHandler } from '../src/serverless/handlers/notion-database-info-handler.js';
-import { PlatformAdapter } from '../src/serverless/core/platform-adapter.js';
+export default async function handler(req, res) {
+  // 設定 CORS 標頭
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-// 創建 Handler 實例
-const handler = new NotionDatabaseInfoHandler();
+  // 處理 CORS 預檢請求
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-export default async function notionDatabaseInfo(req, res) {
+  // 只允許 POST 請求
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
-    // 轉換 Vercel 請求為統一格式
-    const request = PlatformAdapter.fromVercelRequest(req);
-    const context = PlatformAdapter.createContext('notion-database-info');
-    
-    // 執行 Handler
-    const response = await handler.handle(request, context);
-    
-    // 轉換為 Vercel 回應格式
-    PlatformAdapter.toVercelResponse(res, response);
-    
+    const { databaseId } = req.body;
+
+    if (!databaseId) {
+      return res.status(400).json({ error: 'Missing databaseId' });
+    }
+
+    // 從環境變數取得 Notion API Key
+    const notionApiKey = process.env.VITE_NOTION_API_KEY;
+    if (!notionApiKey) {
+      return res.status(500).json({ error: 'Notion API key not configured' });
+    }
+
+    // 直接呼叫 Notion API
+    const notionResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${notionApiKey}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!notionResponse.ok) {
+      const errorText = await notionResponse.text();
+      console.error('Notion API error:', errorText);
+      return res.status(notionResponse.status).json({ 
+        error: 'Notion API error',
+        details: errorText
+      });
+    }
+
+    const databaseData = await notionResponse.json();
+
+    // 回傳資料庫資訊
+    const result = {
+      id: databaseData.id,
+      title: databaseData.title?.[0]?.plain_text || 'Untitled',
+      lastEditedTime: databaseData.last_edited_time,
+      properties: Object.keys(databaseData.properties || {}),
+      url: databaseData.url
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+
   } catch (error) {
-    console.error('Vercel API Route Error:', error);
-    res.status(500).json({ 
+    console.error('API Error:', error);
+    return res.status(500).json({ 
+      success: false,
       error: 'Internal Server Error', 
       message: error.message 
     });
