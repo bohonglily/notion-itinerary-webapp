@@ -69,6 +69,19 @@ export class NotionService {
       
       const result = await response.json();
       logger.apiResponse(method, path, response.status, result);
+      
+      // 詳細記錄 API 回應內容以供調試
+      if (path.includes('notion-database-info')) {
+        console.log('🔍 Database Info Response:', result);
+      } else if (path.includes('notion-query')) {
+        console.log('🔍 Query Response Keys:', Object.keys(result));
+        console.log('🔍 Query Response Sample:', {
+          results: result.results ? `Array(${result.results.length})` : 'missing',
+          databaseName: result.databaseName || 'missing',
+          databaseLastEditedTime: result.databaseLastEditedTime || 'missing'
+        });
+      }
+      
       return result;
     } catch (error) {
       logger.apiError(method, path, error as Error);

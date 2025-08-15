@@ -29,32 +29,56 @@ export const useItinerary = (databaseId: string, startDate?: string | null, endD
   const { data, isLoading, error } = useQuery({
     queryKey: ['itinerary', databaseId, startDate, endDate],
     queryFn: async (): Promise<ItineraryData> => {
-      logger.info('ITINERARY_HOOK', 'Starting itinerary data fetch', { databaseId, startDate, endDate });
-      
-      const cachedData = cacheService.getItinerary(databaseId, startDate, endDate);
-      const latestNotionLastEditedTime = await notionService.getDatabaseLastEditedTime(databaseId);
-      logger.debug('ITINERARY_HOOK', 'Latest Notion last_edited_time', { latestNotionLastEditedTime });
-
-      if (cachedData && cachedData.databaseLastEditedTime) {
-        const cachedTime = new Date(cachedData.databaseLastEditedTime);
-        const latestTime = new Date(latestNotionLastEditedTime);
-        logger.debug('ITINERARY_HOOK', 'Cache comparison', { 
-          cachedTime: cachedData.databaseLastEditedTime,
-          latestTime: latestNotionLastEditedTime,
-          isCacheNewer: cachedTime >= latestTime 
-        });
-
-        if (cachedTime >= latestTime) {
-          logger.info('ITINERARY_HOOK', 'Using cached data');
-          return cachedData;
+      try {
+        logger.info('ITINERARY_HOOK', 'Starting itinerary data fetch', { databaseId, startDate, endDate });
+        
+        const cachedData = cacheService.getItinerary(databaseId, startDate, endDate);
+        
+        let latestNotionLastEditedTime;
+        try {
+          latestNotionLastEditedTime = await notionService.getDatabaseLastEditedTime(databaseId);
+          logger.debug('ITINERARY_HOOK', 'Latest Notion last_edited_time', { latestNotionLastEditedTime });
+        } catch (dbError) {
+          logger.error('ITINERARY_HOOK', 'Failed to get database last edited time', { error: dbError });
+          throw new Error(`Database access failed: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`);
         }
-      }
 
-      logger.info('ITINERARY_HOOK', 'Fetching fresh data from Notion');
-      const freshData = await notionService.getItineraryData(databaseId, startDate, endDate);
-      const dataToCache = { ...freshData, databaseLastEditedTime: latestNotionLastEditedTime };
-      cacheService.setItinerary(databaseId, dataToCache, startDate, endDate);
-      return dataToCache;
+        if (cachedData && cachedData.databaseLastEditedTime) {
+          const cachedTime = new Date(cachedData.databaseLastEditedTime);
+          const latestTime = new Date(latestNotionLastEditedTime);
+          logger.debug('ITINERARY_HOOK', 'Cache comparison', { 
+            cachedTime: cachedData.databaseLastEditedTime,
+            latestTime: latestNotionLastEditedTime,
+            isCacheNewer: cachedTime >= latestTime 
+          });
+
+          if (cachedTime >= latestTime) {
+            logger.info('ITINERARY_HOOK', 'Using cached data');
+            return cachedData;
+          }
+        }
+
+        logger.info('ITINERARY_HOOK', 'Fetching fresh data from Notion');
+        let freshData;
+        try {
+          freshData = await notionService.getItineraryData(databaseId, startDate, endDate);
+          logger.info('ITINERARY_HOOK', 'Fresh data received', { 
+            itemCount: freshData.items?.length,
+            databaseName: freshData.databaseName 
+          });
+        } catch (queryError) {
+          logger.error('ITINERARY_HOOK', 'Failed to get itinerary data', { error: queryError });
+          throw new Error(`Query failed: ${queryError instanceof Error ? queryError.message : 'Unknown error'}`);
+        }
+        
+        const dataToCache = { ...freshData, databaseLastEditedTime: latestNotionLastEditedTime };
+        cacheService.setItinerary(databaseId, dataToCache, startDate, endDate);
+        logger.info('ITINERARY_HOOK', 'Data cached successfully');
+        return dataToCache;
+      } catch (error) {
+        logger.error('ITINERARY_HOOK', 'Query function failed', { error });
+        throw error;
+      }
     },
     enabled: !!databaseId,
     staleTime: 5 * 60 * 1000 // 5 minutes 這會影響觸發檢查新版的時間
