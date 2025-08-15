@@ -27,22 +27,48 @@ export class NotionService {
     logger.apiRequest(method, path, body);
     
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 秒超時
+      
       const response = await window.fetch(path, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
         body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+
+      logger.info('API', `Response received: ${method} ${path}`, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        const contentType = response.headers.get('content-type');
+        
+        try {
+          if (contentType && contentType.includes('application/json')) {
+            errorData = await response.json();
+          } else {
+            const errorText = await response.text();
+            errorData = { error: errorText, raw: errorText };
+          }
+        } catch (parseError) {
+          logger.error('API', `Failed to parse error response for ${method} ${path}`, { parseError });
+          errorData = { error: `HTTP ${response.status} ${response.statusText}` };
+        }
+        
         logger.apiResponse(method, path, response.status, errorData);
         throw new Error(`${method} ${path} failed: ${errorData.error || response.statusText}`);
       }
       
       const result = await response.json();
-      logger.apiResponse(method, path, response.status);
+      logger.apiResponse(method, path, response.status, result);
       return result;
     } catch (error) {
       logger.apiError(method, path, error as Error);

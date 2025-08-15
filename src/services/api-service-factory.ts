@@ -47,21 +47,26 @@ export class ApiServiceFactory {
       // 根據域名判斷平台
       if (origin.includes('netlify.app') || origin.includes('netlify.com')) {
         basePath = `${origin}/.netlify/functions`;
+        console.log('🔧 API Service Factory: Detected Netlify platform', { origin, basePath });
       } else if (origin.includes('vercel.app') || origin.includes('vercel.com')) {
         basePath = `${origin}/api`;
+        console.log('🔧 API Service Factory: Detected Vercel platform', { origin, basePath });
       } else if (isDev) {
         // 開發環境：檢查是否有 Netlify Dev
         basePath = origin.includes('localhost:8888') 
           ? `${origin}/.netlify/functions`
           : `${origin}/api`;
+        console.log('🔧 API Service Factory: Development environment', { origin, basePath });
       } else {
         // 預設使用 Netlify 格式
         basePath = `${origin}/.netlify/functions`;
+        console.log('🔧 API Service Factory: Default to Netlify format', { origin, basePath });
       }
     } else {
       // 服務端環境：使用部署管理器
       const config = DeploymentManager.getPlatformConfig();
       basePath = config.apiBasePath;
+      console.log('🔧 API Service Factory: Server-side environment', { basePath });
     }
 
     return {
