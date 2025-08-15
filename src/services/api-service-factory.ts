@@ -3,7 +3,7 @@
  * 根據部署平台動態選擇正確的 API 端點
  */
 
-import { DeploymentManager } from '../serverless/config/deployment';
+// 移除 serverless 依賴，使用簡化的平台檢測
 
 export interface ApiEndpoints {
   notionQuery: string;
@@ -63,9 +63,8 @@ export class ApiServiceFactory {
         console.log('🔧 API Service Factory: Default to Netlify format', { origin, basePath });
       }
     } else {
-      // 服務端環境：使用部署管理器
-      const config = DeploymentManager.getPlatformConfig();
-      basePath = config.apiBasePath;
+      // 服務端環境：預設使用 API 格式
+      basePath = '/api';
       console.log('🔧 API Service Factory: Server-side environment', { basePath });
     }
 
@@ -125,10 +124,23 @@ export class ApiServiceFactory {
     }
 
     return {
-      platform: DeploymentManager.detectPlatform(),
+      platform: this.detectSimplePlatform(),
       endpoints: this.endpoints,
       health,
     };
+  }
+
+  /**
+   * 簡化的平台檢測
+   */
+  private detectSimplePlatform(): string {
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      if (origin.includes('netlify')) return 'netlify';
+      if (origin.includes('vercel')) return 'vercel';
+      return 'unknown';
+    }
+    return 'server';
   }
 
   /**
@@ -140,10 +152,10 @@ export class ApiServiceFactory {
     retries: number;
     rateLimitDelay: number;
   } {
-    const config = DeploymentManager.getPlatformConfig();
+    const platform = this.detectSimplePlatform();
     
     // 根據平台提供不同的建議配置
-    switch (config.platform) {
+    switch (platform) {
       case 'netlify':
         return {
           platform: 'netlify',
@@ -158,14 +170,6 @@ export class ApiServiceFactory {
           timeout: 25000, // Vercel 有 30 秒限制
           retries: 3,
           rateLimitDelay: 200,
-        };
-      
-      case 'aws':
-        return {
-          platform: 'aws',
-          timeout: 60000, // AWS Lambda 可以更長
-          retries: 3,
-          rateLimitDelay: 50,
         };
       
       default:
