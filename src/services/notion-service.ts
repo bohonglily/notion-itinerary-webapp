@@ -118,21 +118,22 @@ async getItineraryData(databaseId: string, startDate?: string | null, endDate?: 
     const notionData = await this._makeRequest<any>(endpoint, 'POST', { databaseId, startDate: formattedStartDate, endDate: formattedEndDate });
     
     logger.debug('NOTION', 'Notion data received', { resultsCount: notionData.results?.length });
-    let items: NotionItineraryItem[] = notionData.results.map((page: NotionPageResponse) => {
-      const properties = page.properties;
+    
+    // API 已經回傳轉換後的資料，直接使用即可
+    let items: NotionItineraryItem[] = notionData.results.map((item: any) => {
       return {
-        id: page.id,
-        項目: properties['項目']?.title?.[0]?.plain_text || '',
-        日期: properties['日期']?.date?.start || '',
-        時段: properties['時段']?.multi_select?.map((s) => s.name) || [],
-        GoogleMaps: properties['GoogleMaps']?.url || '',
-        重要資訊: properties['重要資訊']?.rich_text?.map((t) => t.plain_text).join('') || '',
-        人均價: properties['人均價']?.number || 0,
-        前往方式: properties['前往方式']?.rich_text?.map((t) => t.plain_text).join('') || '',
-        待辦: properties['待辦']?.rich_text?.map((t) => t.plain_text).join('') || '',
-        縮圖網址: properties['縮圖網址']?.url || '',
-        景點介紹: properties['景點介紹']?.rich_text?.map((t) => t.plain_text).join('') || '',
-        排序: properties['排序']?.number || null
+        id: item.id,
+        項目: item.項目 || '',
+        日期: item.日期 || '',
+        時段: item.時段 || [],
+        GoogleMaps: item.GoogleMaps || '',
+        重要資訊: item.重要資訊 || '',
+        人均價: item.人均價 || 0,
+        前往方式: item.前往方式 || '',
+        待辦: item.待辦 || '',
+        縮圖網址: item.縮圖網址 || '',
+        景點介紹: item.景點介紹 || '',
+        排序: item.排序 || null
       };
     });
     // 依照日期、時段、排序欄位進行排序
