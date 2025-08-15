@@ -150,10 +150,9 @@ export const handler = async (event) => {
         'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({
-        success: true,
-        data: transformedData,
-        hasMore: notionData.has_more,
-        nextCursor: notionData.next_cursor
+        results: transformedData,
+        has_more: notionData.has_more,
+        next_cursor: notionData.next_cursor
       })
     };
 

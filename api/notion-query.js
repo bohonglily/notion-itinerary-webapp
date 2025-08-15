@@ -110,11 +110,11 @@ export default async function handler(req, res) {
       };
     });
 
+    // 回傳前端期望的格式
     return res.status(200).json({
-      success: true,
-      data: transformedData,
-      hasMore: notionData.has_more,
-      nextCursor: notionData.next_cursor
+      results: transformedData,
+      has_more: notionData.has_more,
+      next_cursor: notionData.next_cursor
     });
 
   } catch (error) {

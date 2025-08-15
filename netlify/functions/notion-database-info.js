@@ -104,8 +104,7 @@ export const handler = async (event) => {
         'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({
-        success: true,
-        data: result
+        databaseLastEditedTime: databaseData.last_edited_time
       })
     };
 

@@ -62,9 +62,9 @@ export default async function handler(req, res) {
       url: databaseData.url
     };
 
+    // 回傳前端期望的格式
     return res.status(200).json({
-      success: true,
-      data: result
+      databaseLastEditedTime: databaseData.last_edited_time
     });
 
   } catch (error) {
