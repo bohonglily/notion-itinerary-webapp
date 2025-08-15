@@ -14,7 +14,7 @@
 
 Notion Itinerary WebApp 是一個現代化的旅遊行程展示系統，主要特色：
 
-- **前後端分離架構**：React 前端 + Netlify Functions 後端
+- **混合架構設計**：前端 TypeScript + 後端純 JavaScript，支援多平台 Serverless
 - **多 AI 提供商整合**：支援 Gemini、OpenAI、Claude、OpenRouter
 - **智能快取系統**：本地快取 + 智能失效策略
 - **響應式設計**：適配桌面和行動裝置
