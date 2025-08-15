@@ -120,6 +120,25 @@ export const handler = async (event) => {
 
     const notionData = await notionResponse.json();
 
+    // 同時取得資料庫資訊以獲得名稱
+    const dbInfoResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${notionApiKey}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    let databaseName = 'Untitled Database';
+    let databaseLastEditedTime = new Date().toISOString();
+    
+    if (dbInfoResponse.ok) {
+      const dbInfo = await dbInfoResponse.json();
+      databaseName = dbInfo.title?.[0]?.plain_text || 'Untitled Database';
+      databaseLastEditedTime = dbInfo.last_edited_time;
+    }
+
     // 轉換 Notion 資料格式
     const transformedData = notionData.results.map(page => {
       const properties = page.properties;
@@ -152,7 +171,9 @@ export const handler = async (event) => {
       body: JSON.stringify({
         results: transformedData,
         has_more: notionData.has_more,
-        next_cursor: notionData.next_cursor
+        next_cursor: notionData.next_cursor,
+        databaseName: databaseName,
+        databaseLastEditedTime: databaseLastEditedTime
       })
     };
 
