@@ -1,31 +1,95 @@
 /**
  * Vercel API Route - Image Proxy
- * 使用統一的 Handler 和平台適配器
+ * 純 JavaScript 實作，與 Netlify 版本保持一致
  */
 
-import { ImageProxyHandler } from '../src/serverless/handlers/image-proxy-handler.js';
-import { PlatformAdapter } from '../src/serverless/core/platform-adapter.js';
+export default async function handler(req, res) {
+  // 設定 CORS 標頭
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-// 創建 Handler 實例
-const handler = new ImageProxyHandler();
+  // 處理 CORS 預檢請求
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-export default async function imageProxy(req, res) {
+  // 只允許 GET 請求
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const imageUrl = req.query?.url;
+
+  if (!imageUrl) {
+    return res.status(400).json({ error: 'Missing image URL parameter' });
+  }
+
   try {
-    // 轉換 Vercel 請求為統一格式
-    const request = PlatformAdapter.fromVercelRequest(req);
-    const context = PlatformAdapter.createContext('image-proxy');
+    console.log('Attempting to proxy image:', imageUrl);
+
+    // 檢查 URL 格式
+    let validUrl;
+    try {
+      validUrl = new URL(imageUrl);
+    } catch (urlError) {
+      throw new Error(`Invalid URL format: ${imageUrl}`);
+    }
+
+    // 設定請求選項
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; NotionItineraryWebApp/1.0)',
+        'Accept': 'image/*,*/*;q=0.8',
+        'Accept-Encoding': 'identity', // 避免壓縮問題
+      },
+      signal: AbortSignal.timeout(10000), // 10秒超時
+    };
+
+    const response = await fetch(imageUrl, fetchOptions);
     
-    // 執行 Handler
-    const response = await handler.handle(request, context);
+    console.log(`Response status: ${response.status} for ${imageUrl}`);
     
-    // 轉換為 Vercel 回應格式
-    PlatformAdapter.toVercelResponse(res, response);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+    }
+
+    // 檢查內容類型
+    const contentType = response.headers.get('content-type');
+    console.log(`Content-Type: ${contentType} for ${imageUrl}`);
     
+    if (!contentType || !contentType.startsWith('image/')) {
+      throw new Error(`Invalid content type: ${contentType}. Expected image/*`);
+    }
+
+    // 獲取圖片數據
+    const imageBuffer = await response.arrayBuffer();
+    
+    if (imageBuffer.byteLength === 0) {
+      throw new Error('Empty image data received');
+    }
+
+    console.log(`Image size: ${imageBuffer.byteLength} bytes for ${imageUrl}`);
+
+    // 設定回應標頭
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
+    // 直接回傳 Buffer
+    return res.status(200).send(Buffer.from(imageBuffer));
+
   } catch (error) {
-    console.error('Vercel API Route Error:', error);
-    res.status(500).json({ 
-      error: 'Internal Server Error', 
-      message: error.message 
+    console.error('Error proxying image:', {
+      url: imageUrl,
+      error: error.message,
+      stack: error.stack
+    });
+    
+    return res.status(500).json({ 
+      error: 'Failed to proxy image',
+      message: error.message,
+      url: imageUrl
     });
   }
 }
