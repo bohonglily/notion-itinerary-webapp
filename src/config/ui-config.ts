@@ -1,0 +1,1 @@
+export const MODAL_WIDTH_CLASS = "max-w-2xl";

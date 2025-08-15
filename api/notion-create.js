@@ -1,0 +1,31 @@
+/**
+ * Vercel API Route - Notion Create
+ * 使用統一的 Handler 和平台適配器
+ */
+
+import { NotionCreateHandler } from '../src/serverless/handlers/notion-create-handler.js';
+import { PlatformAdapter } from '../src/serverless/core/platform-adapter.js';
+
+// 創建 Handler 實例
+const handler = new NotionCreateHandler();
+
+export default async function notionCreate(req, res) {
+  try {
+    // 轉換 Vercel 請求為統一格式
+    const request = PlatformAdapter.fromVercelRequest(req);
+    const context = PlatformAdapter.createContext('notion-create');
+    
+    // 執行 Handler
+    const response = await handler.handle(request, context);
+    
+    // 轉換為 Vercel 回應格式
+    PlatformAdapter.toVercelResponse(res, response);
+    
+  } catch (error) {
+    console.error('Vercel API Route Error:', error);
+    res.status(500).json({ 
+      error: 'Internal Server Error', 
+      message: error.message 
+    });
+  }
+}
