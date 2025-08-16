@@ -6,6 +6,7 @@ export interface NotionItineraryItem {
   時段?: string[]; // Time period (multi-select)
   GoogleMaps?: string; // Google Maps URL
   重要資訊?: string; // Important notes
+  參考資料?: string; // Reference materials
   人均價?: number | null; // Cost per person
   前往方式?: string; // Transportation method
   待辦?: string; // To-do items
@@ -51,6 +52,7 @@ interface NotionPropertyValues {
   '時段'?: { multi_select: NotionMultiSelectOption[] };
   'GoogleMaps'?: NotionUrl;
   '重要資訊'?: { rich_text: NotionRichText[] };
+  '參考資料'?: { rich_text: NotionRichText[] };
   '人均價'?: { number: number };
   '前往方式'?: { rich_text: NotionRichText[] };
   '待辦'?: { rich_text: NotionRichText[] };

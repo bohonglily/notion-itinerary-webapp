@@ -1,6 +1,8 @@
 {
   "name": "notion-itinerary-webapp",
   "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev:vite",
   "outputDirectory": "dist",
   "functions": {
     "api/*.js": {

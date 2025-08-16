@@ -3,16 +3,13 @@
  * 與 Vercel 版本保持一致的純 JavaScript 實作
  */
 
+import { buildNotionProperties, getNotionHeaders, getCorsHeaders, createErrorResponse, createSuccessResponse } from '../../utils/notion-client.js';
 export const handler = async (event) => {
   // 處理 CORS 預檢請求
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      },
+      headers: getCorsHeaders(),
       body: ''
     };
   }
@@ -21,116 +18,75 @@ export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: { ...getCorsHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
 
   try {
-    const { databaseId, properties: rawProperties } = JSON.parse(event.body);
+    const { databaseId, item } = JSON.parse(event.body);
 
-    if (!databaseId) {
+    if (!databaseId || !item) {
       return {
         statusCode: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({ error: 'Missing databaseId' })
+        headers: { ...getCorsHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Missing databaseId or item data' })
       };
     }
 
-    if (!rawProperties) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({ error: 'Missing properties' })
-      };
-    }
-
-    // 從環境變數取得 Notion API Key（優先使用伺服器端變數）
-    const notionApiKey = process.env.NOTION_API_KEY || process.env.VITE_NOTION_API_KEY;
+    // 從環境變數取得 Notion API Key
+    const notionApiKey = process.env.VITE_NOTION_API_KEY;
     if (!notionApiKey) {
       return {
         statusCode: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
+        headers: { ...getCorsHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ error: 'Notion API key not configured' })
       };
     }
 
-    console.log('Creating new page in database:', databaseId);
+    // 建構 Notion 頁面屬性
+    const properties = buildNotionProperties(item);
+
+    console.log('Creating new page in database:', databaseId, 'with properties:', properties);
 
     // 建立新頁面
-    const createResponse = await fetch(`https://api.notion.com/v1/pages`, {
+    const response = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${notionApiKey}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
+      headers: getNotionHeaders(notionApiKey),
       body: JSON.stringify({
         parent: { database_id: databaseId },
-        properties: rawProperties
+        properties
       })
     });
 
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      console.error('Notion API error:', errorText);
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Notion API error:', errorData);
       return {
-        statusCode: createResponse.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({ 
-          error: 'Notion API error',
-          details: errorText
-        })
+        statusCode: response.status,
+        headers: { ...getCorsHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(createErrorResponse(new Error(`Notion API error: ${errorData}`), response.status))
       };
     }
 
-    const createdPage = await createResponse.json();
-    console.log(`Successfully created page: ${createdPage.id}`);
+    const pageData = await response.json();
+    console.log('Successfully created page:', pageData.id);
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      body: JSON.stringify({
-        success: true,
-        data: {
-          id: createdPage.id,
-          created_time: createdPage.created_time,
-          last_edited_time: createdPage.last_edited_time
-        }
-      })
+      headers: { ...getCorsHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(createSuccessResponse({ 
+        id: pageData.id,
+        message: 'Page created successfully'
+      }))
     };
 
   } catch (error) {
     console.error('Netlify Function Error:', error);
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      body: JSON.stringify({ 
-        success: false,
-        error: 'Internal Server Error', 
-        message: error.message 
-      })
+      headers: { ...getCorsHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(createErrorResponse(error))
     };
   }
 };

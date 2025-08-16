@@ -52,10 +52,20 @@ export class ApiServiceFactory {
         basePath = `${origin}/api`;
         console.log('🔧 API Service Factory: Detected Vercel platform', { origin, basePath });
       } else if (isDev) {
-        // 開發環境：預設使用 Netlify Functions（透過 proxy）
-        // 當執行 npm run dev:netlify 時，Vite 會代理 /.netlify/functions/* 到 localhost:8888
-        basePath = `${origin}/.netlify/functions`;
-        console.log('🔧 API Service Factory: Development environment (using Netlify proxy)', { origin, basePath });
+        // 開發環境：檢查端口判斷平台
+        if (origin.includes('8888')) {
+          // Netlify Dev 環境 (端口 8888)
+          basePath = `${origin}/.netlify/functions`;
+          console.log('🔧 API Service Factory: Development environment (Netlify Dev)', { origin, basePath });
+        } else if (origin.includes('3000')) {
+          // Vercel Dev 環境 (端口 3000)
+          basePath = `${origin}/api`;
+          console.log('🔧 API Service Factory: Development environment (Vercel Dev)', { origin, basePath });
+        } else {
+          // 預設使用 Netlify Functions
+          basePath = `${origin}/.netlify/functions`;
+          console.log('🔧 API Service Factory: Development environment (default Netlify)', { origin, basePath });
+        }
       } else {
         // 預設使用 Netlify 格式
         basePath = `${origin}/.netlify/functions`;

@@ -1,13 +1,13 @@
 # Notion Itinerary WebApp - 智能旅遊行程展示系統
 
-一個基於 React + TypeScript 的現代化旅遊行程展示系統，與 Notion 資料庫深度整合，提供美觀的時間軸介面來展示旅遊行程。系統支援多種 AI 服務進行內容增強，包含自動生成景點介紹和圖片搜尋功能。
+一個基於 React + TypeScript 的現代化旅遊行程展示系統，與 Notion 資料庫深度整合，提供美觀的時間軸介面來展示旅遊行程。系統支援多種 AI 服務進行內容增強，包含自動生成景點介紹和圖片搜尋功能。採用混合架構設計，前端 TypeScript + 後端純 JavaScript，支援 Netlify 和 Vercel 多平台部署。
 
 ## 核心功能特色
 
 ### 🗂️ Notion 整合
 - 直接連接 Notion 資料庫讀取旅遊行程資料
 - 支援即時資料同步與更新
-- 完整的 CRUD 操作（透過 Netlify Functions）
+- 完整的 CRUD 操作（透過多平台 Serverless Functions）
 
 ### 🧠 AI 智能增強
 - **多 AI 提供商支援**：Google Gemini、OpenAI、Claude、OpenRouter
@@ -57,16 +57,21 @@ React 18 + TypeScript
 └── 建置工具：Vite
 ```
 
-### 後端服務
+### 後端服務（混合架構）
 ```
-Netlify Functions (Serverless)
-├── notion-query.js - Notion 資料查詢
-├── notion-create.js - 建立新行程項目
-├── notion-update.js - 更新行程項目
-├── notion-delete.js - 刪除行程項目
-├── notion-bulk-update.js - 批量更新
-├── notion-database-info.js - 資料庫資訊查詢
-└── image-proxy.js - 圖片代理服務
+多平台 Serverless Functions (純 JavaScript)
+├── utils/
+│   └── notion-client.js - 共用 Notion API 工具函數
+├── netlify/functions/ - Netlify Functions
+│   ├── notion-query.js - Notion 資料查詢
+│   ├── notion-create.js - 建立新行程項目
+│   ├── notion-update.js - 更新行程項目
+│   ├── notion-delete.js - 刪除行程項目
+│   ├── notion-bulk-update.js - 批量更新
+│   ├── notion-database-info.js - 資料庫資訊查詢
+│   └── image-proxy.js - 圖片代理服務
+└── api/ - Vercel API Routes
+    └── (相同的檔案結構，適配 Vercel 格式)
 ```
 
 ### 外部 API 整合
@@ -181,7 +186,7 @@ Netlify Functions (Serverless)
 
 ```
 notion-itinerary-webapp/
-├── src/
+├── src/                    # 前端 TypeScript 代碼
 │   ├── components/          # React 元件
 │   │   ├── AdminPanel.tsx           # 管理者面板
 │   │   ├── AdminPasswordPrompt.tsx  # 管理者密碼驗證
@@ -195,7 +200,7 @@ notion-itinerary-webapp/
 │   │   ├── ErrorBoundary.tsx       # 錯誤邊界
 │   │   └── HomePage.tsx            # 首頁元件
 │   │
-│   ├── services/           # 服務層
+│   ├── services/           # 前端服務層
 │   │   ├── ai/                     # AI 服務抽象層
 │   │   │   ├── ai-manager.ts       # AI 管理器（主要入口）
 │   │   │   ├── abstract-ai-provider.ts  # AI 提供商抽象類別
@@ -206,7 +211,8 @@ notion-itinerary-webapp/
 │   │   ├── notion-service.ts       # Notion API 服務
 │   │   ├── pexels-service.ts       # Pexels 圖片搜尋
 │   │   ├── cache-service.ts        # 快取管理服務
-│   │   └── logger-service.ts       # 分層級日誌服務
+│   │   ├── logger-service.ts       # 分層級日誌服務
+│   │   └── api-service-factory.ts  # API 端點工廠
 │   │
 │   ├── hooks/              # 自訂 React Hooks
 │   │   ├── useItinerary.ts         # 行程資料管理
@@ -227,7 +233,19 @@ notion-itinerary-webapp/
 │   └── types/              # TypeScript 型別定義
 │       └── index.ts                # 主要型別定義
 │
-├── netlify/functions/      # Netlify Functions
+├── utils/                  # 後端共用工具 (JavaScript)
+│   └── notion-client.js            # Notion API 共用函數
+│
+├── netlify/functions/      # Netlify Functions (JavaScript)
+│   ├── notion-query.js             # Notion 資料查詢
+│   ├── notion-create.js            # 建立新行程項目
+│   ├── notion-update.js            # 更新行程項目
+│   ├── notion-delete.js            # 刪除行程項目
+│   ├── notion-bulk-update.js       # 批量更新
+│   ├── notion-database-info.js     # 資料庫資訊查詢
+│   └── image-proxy.js              # 圖片代理服務
+│
+├── api/                    # Vercel API Routes (JavaScript)
 │   ├── notion-query.js             # Notion 資料查詢
 │   ├── notion-create.js            # 建立新行程項目
 │   ├── notion-update.js            # 更新行程項目
@@ -240,7 +258,9 @@ notion-itinerary-webapp/
 ├── package.json           # 專案相依性
 ├── vite.config.ts         # Vite 設定
 ├── tailwind.config.js     # Tailwind CSS 設定
-└── tsconfig.json          # TypeScript 設定
+├── tsconfig.json          # TypeScript 設定
+├── netlify.toml           # Netlify 設定
+└── vercel.json            # Vercel 設定
 ```
 
 ## 開發與部署
@@ -264,9 +284,20 @@ npm run build
 ```
 
 ### 建置與部署
+
+#### 部署到 Netlify
 1. 建置產品版本：`npm run build`
-2. 部署到 Netlify（需要先設定 Netlify CLI）：`netlify deploy --prod`
+2. 部署到 Netlify：`netlify deploy --prod`
 3. 設定環境變數於 Netlify 控制面板
+4. 系統會自動使用 `netlify/functions/` 中的 API
+
+#### 部署到 Vercel  
+1. 建置產品版本：`npm run build`
+2. 部署到 Vercel：`vercel --prod`
+3. 設定環境變數於 Vercel 控制面板
+4. 系統會自動使用 `api/` 中的 API Routes
+
+> **智能端點選擇**：前端會根據部署域名自動選擇正確的 API 端點，無需手動配置。
 
 ## 維護注意事項
 

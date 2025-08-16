@@ -4,6 +4,12 @@
 [functions]
 directory = "netlify/functions"
 
+[dev]
+  command = "npm run dev:vite"
+  port = 8888
+  publish = "dist"
+  functions = "netlify/functions"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

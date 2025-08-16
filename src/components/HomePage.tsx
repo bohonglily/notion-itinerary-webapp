@@ -1,7 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { MapPin, Calendar, Clock, Search, Trash2, Download, Upload, Plus, ExternalLink } from 'lucide-react';
 import { useHistory } from '../hooks/useHistory';
 import { HistoryItem } from '../types';
+import DatabaseList from './DatabaseList';
+import { databaseConfigService, DatabaseConfigItem } from '../services/database-config-service';
 
 const HomePage: React.FC = () => {
   const { history, removeFromHistory, clearHistory, getFilteredHistory, exportHistory, importHistory } = useHistory();
@@ -12,15 +14,51 @@ const HomePage: React.FC = () => {
     startDate: '',
     endDate: ''
   });
+  const [databases, setDatabases] = useState<DatabaseConfigItem[]>([]);
+  const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredHistory = getFilteredHistory(searchTerm);
+
+  // 載入資料庫列表
+  const loadDatabaseList = async () => {
+    const configDatabaseId = databaseConfigService.getConfigDatabaseId();
+    if (!configDatabaseId) {
+      setDatabases([]);
+      return;
+    }
+
+    setIsLoadingDatabases(true);
+    try {
+      const databaseList = await databaseConfigService.getDatabaseList(configDatabaseId);
+      setDatabases(databaseList);
+    } catch (error) {
+      console.error('Failed to load database list:', error);
+      setDatabases([]);
+    } finally {
+      setIsLoadingDatabases(false);
+    }
+  };
+
+  // 初始載入
+  useEffect(() => {
+    loadDatabaseList();
+  }, []);
 
   const handleHistoryClick = (item: HistoryItem) => {
     const params = new URLSearchParams();
     params.set('databaseId', item.databaseId);
     if (item.startDate) params.set('startDate', item.startDate);
     if (item.endDate) params.set('endDate', item.endDate);
+    
+    window.location.href = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  };
+
+  const handleDatabaseClick = (database: DatabaseConfigItem) => {
+    const params = new URLSearchParams();
+    params.set('databaseId', database.databaseId);
+    if (database.startDate) params.set('startDate', database.startDate);
+    if (database.endDate) params.set('endDate', database.endDate);
     
     window.location.href = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   };
@@ -90,6 +128,14 @@ const HomePage: React.FC = () => {
           </div>
           <p className="text-gray-600">管理您的 Notion 旅遊資料庫</p>
         </div>
+
+        {/* Database List Section */}
+        <DatabaseList 
+          databases={databases}
+          isLoading={isLoadingDatabases}
+          onRefresh={loadDatabaseList}
+          onDatabaseClick={handleDatabaseClick}
+        />
 
         {/* Manual Input Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
