@@ -14,7 +14,8 @@
 
 Notion Itinerary WebApp 是一個現代化的旅遊行程展示系統，主要特色：
 
-- **前後端分離架構**：React 前端 + Netlify Functions 後端
+- **多平台 Serverless 架構**：支援 Netlify Functions 和 Vercel API Routes
+- **React 前端**：現代化的使用者介面與體驗
 - **多 AI 提供商整合**：支援 Gemini、OpenAI、Claude、OpenRouter
 - **智能快取系統**：本地快取 + 智能失效策略
 - **響應式設計**：適配桌面和行動裝置
@@ -92,12 +93,42 @@ VITE_OPENROUTER_MODEL=openrouter/cinematika-7b
 ```
 
 ### 4. 開發伺服器啟動
+
+#### 🚀 Netlify Functions 本地測試
 ```bash
-# 僅前端開發
+# 方式 1：使用預設的並行模式（推薦）
+npm run dev:netlify
+
+# 方式 2：分別啟動
+# 終端 1：啟動前端開發伺服器
 npm run dev
 
-# 包含 Netlify Functions
-npm run netlify:dev
+# 終端 2：啟動 Netlify Functions
+npx netlify functions:serve
+```
+
+**Netlify Functions 端點格式：**
+- 本地：`http://localhost:8888/.netlify/functions/[function-name]`
+
+#### 🌐 Vercel API Routes 本地測試
+```bash
+# 使用 Vercel CLI 本地開發（推薦）
+npm run dev:vercel
+
+# 或者直接使用 Vercel CLI
+npx vercel dev
+```
+
+**Vercel API Routes 端點格式：**
+- 本地：`http://localhost:3000/api/[function-name]`
+
+#### 🧪 平台切換測試
+```bash
+# 檢測當前平台
+npm run platform:detect
+
+# 查看平台詳細資訊
+npm run platform:info
 ```
 
 ## 核心概念
@@ -285,14 +316,35 @@ services/
 
 ### 1. 本地測試
 
+#### Netlify Functions 測試
 ```bash
-# 前端測試
-npm run dev
-# 檢查 http://localhost:5173
+# 完整環境測試（推薦）
+npm run dev:netlify
+# 前端：http://localhost:5173
+# API：http://localhost:8888/.netlify/functions/*
 
+# 僅前端測試
+npm run dev
+# 檢查：http://localhost:5173
+```
+
+#### Vercel API Routes 測試
+```bash
 # 完整環境測試
-npm run netlify:dev
-# 檢查 http://localhost:8888
+npm run dev:vercel
+# 統一端點：http://localhost:3000
+# API：http://localhost:3000/api/*
+```
+
+#### API 端點測試
+```bash
+# 測試資料庫資訊
+curl http://localhost:8888/.netlify/functions/notion-database-info
+curl http://localhost:3000/api/notion-database-info
+
+# 測試圖片代理
+curl "http://localhost:8888/.netlify/functions/image-proxy?url=https://example.com/image.jpg"
+curl "http://localhost:3000/api/image-proxy?url=https://example.com/image.jpg"
 ```
 
 ### 2. 除錯工具

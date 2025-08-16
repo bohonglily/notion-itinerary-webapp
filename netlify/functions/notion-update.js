@@ -18,6 +18,10 @@ export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -28,11 +32,17 @@ export const handler = async (event) => {
     if (!pageId || !properties) {
       return {
         statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
         body: JSON.stringify({ error: 'Missing pageId or properties' })
       };
     }
 
-    const notion = new Client({ auth: process.env.VITE_NOTION_API_KEY });
+    // 優先使用伺服器端變數
+    const notionApiKey = process.env.NOTION_API_KEY || process.env.VITE_NOTION_API_KEY;
+    const notion = new Client({ auth: notionApiKey });
 
     const response = await notion.pages.update({
       page_id: pageId,
@@ -52,6 +62,7 @@ export const handler = async (event) => {
     return {
       statusCode: 500,
       headers: {
+        'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({ error: 'Failed to update Notion page', details: JSON.stringify(error) })

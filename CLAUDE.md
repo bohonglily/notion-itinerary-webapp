@@ -67,29 +67,27 @@ React 18 + TypeScript
 ### 後端服務（多平台 Serverless 架構）
 ```
 多平台 Serverless Functions
-├── 抽象層 (src/serverless/)
-│   ├── core/
-│   │   ├── base-handler.ts         # 基礎 Handler 抽象類別
-│   │   └── platform-adapter.ts     # 平台適配器
-│   ├── handlers/                   # 業務邏輯處理器
-│   │   ├── notion-query-handler.ts
-│   │   ├── notion-create-handler.ts
-│   │   ├── notion-update-handler.ts
-│   │   ├── notion-delete-handler.ts
-│   │   ├── notion-bulk-update-handler.ts
-│   │   ├── notion-database-info-handler.ts
-│   │   └── image-proxy-handler.ts
-│   ├── services/                   # 核心服務抽象
-│   │   ├── notion-service.ts       # Notion API 抽象
-│   │   └── image-proxy-service.ts  # 圖片代理抽象
-│   └── config/                     # 配置管理
-│       ├── environment.ts          # 環境變數適配
-│       └── deployment.ts           # 部署平台配置
 ├── 平台包裝層
 │   ├── netlify/functions/          # Netlify Functions
+│   │   ├── notion-query.js         # Notion 資料查詢
+│   │   ├── notion-create.js        # 建立新行程項目
+│   │   ├── notion-update.js        # 更新行程項目
+│   │   ├── notion-delete.js        # 刪除行程項目
+│   │   ├── notion-bulk-update.js   # 批量更新
+│   │   ├── notion-database-info.js # 資料庫資訊查詢
+│   │   └── image-proxy.js          # 圖片代理服務
 │   └── api/                       # Vercel API Routes
-└── 前端服務工廠
-    └── src/services/api-service-factory.ts # 動態端點選擇
+│       ├── notion-query.js         # Notion 資料查詢
+│       ├── notion-create.js        # 建立新行程項目
+│       ├── notion-update.js        # 更新行程項目
+│       ├── notion-delete.js        # 刪除行程項目
+│       ├── notion-bulk-update.js   # 批量更新
+│       ├── notion-database-info.js # 資料庫資訊查詢
+│       └── image-proxy.js          # 圖片代理服務
+├── 前端服務工廠
+│   └── src/services/api-service-factory.ts # 動態端點選擇
+└── 環境驗證工具
+    └── src/utils/environment-validator.ts # 環境變數驗證
 ```
 
 ### 外部 API 整合
@@ -258,24 +256,95 @@ VITE_AI_PROVIDER=gemini  # 預設 AI 提供商
 ## 開發與部署
 
 ### 本地開發
+
+#### 🚀 Netlify Functions 本地測試
 ```bash
 # 安裝相依性
 npm install
 
-# 啟動開發伺服器
+# 方式 1：使用預設的並行模式（推薦）
+npm run dev:netlify
+
+# 方式 2：分別啟動
+# 終端 1：啟動前端開發伺服器
 npm run dev
 
-# Netlify Functions 本地測試
-npm run netlify:dev
+# 終端 2：啟動 Netlify Functions
+npx netlify functions:serve
 ```
+
+**Netlify Functions 端點格式：**
+- 本地：`http://localhost:8888/.netlify/functions/[function-name]`
+- 例如：`http://localhost:8888/.netlify/functions/notion-query`
+
+#### 🌐 Vercel API Routes 本地測試
+```bash
+# 使用 Vercel CLI 本地開發（推薦）
+npm run dev:vercel
+
+# 或者直接使用 Vercel CLI
+npx vercel dev
+```
+
+**Vercel API Routes 端點格式：**
+- 本地：`http://localhost:3000/api/[function-name]`
+- 例如：`http://localhost:3000/api/notion-query`
+
+#### 🧪 API 測試方法
+
+**1. 使用瀏覽器直接測試**
+```
+# Netlify Functions
+http://localhost:8888/.netlify/functions/notion-database-info
+
+# Vercel API Routes  
+http://localhost:3000/api/notion-database-info
+```
+
+**2. 使用 curl 測試**
+```bash
+# 測試 Notion 查詢 API
+curl -X POST "http://localhost:8888/.netlify/functions/notion-query" \
+  -H "Content-Type: application/json" \
+  -d '{"databaseId":"your-database-id"}'
+
+# 測試圖片代理 API
+curl "http://localhost:8888/.netlify/functions/image-proxy?url=https://example.com/image.jpg"
+```
+
+**3. 平台切換測試**
+```bash
+# 檢測當前平台
+npm run platform:detect
+
+# 查看平台詳細資訊
+npm run platform:info
+```
+
+#### 📋 可用的 API 端點
+
+| 功能 | Netlify Functions | Vercel API Routes |
+|------|------------------|-------------------|
+| 查詢資料 | `/.netlify/functions/notion-query` | `/api/notion-query` |
+| 建立項目 | `/.netlify/functions/notion-create` | `/api/notion-create` |
+| 更新項目 | `/.netlify/functions/notion-update` | `/api/notion-update` |
+| 刪除項目 | `/.netlify/functions/notion-delete` | `/api/notion-delete` |
+| 批量更新 | `/.netlify/functions/notion-bulk-update` | `/api/notion-bulk-update` |
+| 資料庫資訊 | `/.netlify/functions/notion-database-info` | `/api/notion-database-info` |
+| 圖片代理 | `/.netlify/functions/image-proxy` | `/api/image-proxy` |
 
 ### 建置與部署
 ```bash
 # 建置產品版本
 npm run build
 
-# 部署到 Netlify（需要先設定 Netlify CLI）
-netlify deploy --prod
+# 平台特定建置
+npm run build:netlify  # 針對 Netlify 建置
+npm run build:vercel   # 針對 Vercel 建置
+
+# 部署
+npm run deploy:netlify # 部署到 Netlify
+npm run deploy:vercel  # 部署到 Vercel
 ```
 
 ## 設計模式與架構亮點
@@ -443,10 +512,6 @@ npm run build:vercel   # 針對 Vercel 建置
 npm run deploy:netlify # 部署到 Netlify
 npm run deploy:vercel  # 部署到 Vercel
 
-# 使用統一部署腳本
-node scripts/deploy.js netlify
-node scripts/deploy.js vercel --dry-run
-
 # 平台檢測和診斷
 npm run platform:detect # 檢測當前平台
 npm run platform:info   # 顯示平台詳細資訊
@@ -487,14 +552,11 @@ NEXT_PUBLIC_NOTION_API_KEY=xxx # Next.js 慣例
 
 要添加新的部署平台支援：
 
-1. 在 `src/serverless/config/deployment.ts` 中添加平台配置
-2. 建立平台特定的函數包裝層目錄
-3. 實作包裝函數，使用 `PlatformAdapter` 進行轉換
-4. 更新 `src/services/api-service-factory.ts` 的檢測邏輯
-5. 添加對應的 npm scripts
-6. 更新部署腳本和文檔
-
-詳細指南請參考 `docs/MULTI_PLATFORM_DEPLOYMENT.md`。
+1. 建立平台特定的函數目錄（參考 `netlify/functions/` 和 `api/` 的結構）
+2. 實作相對應的 API 路由函數
+3. 更新 `src/services/api-service-factory.ts` 的平台檢測邏輯
+4. 添加對應的 npm scripts
+5. 更新環境變數配置文檔
 
 ---
 

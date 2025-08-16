@@ -18,6 +18,10 @@ export const handler = async (event) => {
   if (event.httpMethod !== 'DELETE') {
     return {
       statusCode: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -28,11 +32,17 @@ export const handler = async (event) => {
     if (!pageId) {
       return {
         statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
         body: JSON.stringify({ error: 'Missing pageId' })
       };
     }
 
-    const notion = new Client({ auth: process.env.VITE_NOTION_API_KEY });
+    // 優先使用伺服器端變數
+    const notionApiKey = process.env.NOTION_API_KEY || process.env.VITE_NOTION_API_KEY;
+    const notion = new Client({ auth: notionApiKey });
 
     const response = await notion.pages.update({
       page_id: pageId,
@@ -51,6 +61,10 @@ export const handler = async (event) => {
     console.error('Notion API Error:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({ error: 'Failed to delete Notion page' })
     };
   }

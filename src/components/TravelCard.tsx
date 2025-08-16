@@ -7,6 +7,7 @@ import { useMode } from '../hooks/useMode';
 import { useVisibility } from '../contexts/VisibilityContext';
 import TravelCardEditModal from './TravelCardEditModal';
 import { useItinerary } from '../hooks/useItinerary';
+import { ApiServiceFactory } from '../services/api-service-factory';
 
 interface TravelCardProps {
   item: NotionItineraryItem;
@@ -16,11 +17,11 @@ interface TravelCardProps {
 // A unified, styled component for the title section, used in all cases.
 const TitleSection = ({ item, hasImage }: { item: NotionItineraryItem; hasImage: boolean }) => {
   return (
-    <div className={`absolute bottom-0 left-0 right-0 p-4 z-10 flex justify-between items-center ${!hasImage ? 'pb-0' : ''}`}>
+    <div className={`absolute bottom-0 left-0 right-0 p-4 z-10 flex items-end gap-3 ${!hasImage ? 'pb-0' : ''}`}>
       {/* Left side: Title and Tags with a shared background */}
-      <div className="bg-black/50 text-white py-2 px-4 rounded-lg shadow-lg flex items-center gap-3">
+      <div className="bg-black/50 text-white py-2 px-4 rounded-lg shadow-lg flex-1 min-w-0">
         {Array.isArray(item.時段) && item.時段.length > 0 && (
-          <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex flex-wrap gap-2 mb-2">
             {item.時段.map((time, idx) => (
               <span key={idx} className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full">
                 {time}
@@ -28,14 +29,14 @@ const TitleSection = ({ item, hasImage }: { item: NotionItineraryItem; hasImage:
             ))}
           </div>
         )}
-        <h3 className="text-xl font-bold [text-shadow:_2px_2px_6px_rgb(0_0_0_/_80%)]">
+        <h3 className="text-xl font-bold [text-shadow:_2px_2px_6px_rgb(0_0_0_/_80%)] break-words">
           {item.項目}
         </h3>
       </div>
 
       {/* Right side: Google Maps Icon with its own background */}
       {item.GoogleMaps && (
-        <div className="bg-white/90 p-2 rounded-full shadow-lg">
+        <div className="bg-white/90 p-2 rounded-full shadow-lg flex-shrink-0">
           <a href={item.GoogleMaps} target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-200" title="在 Google Maps 上查看">
             <img src="/googlemaps.png" alt="Google Maps" className="w-5 h-5" />
           </a>
@@ -113,7 +114,7 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
             {hasImage ? (
               <>
                 <img 
-                  src={proxyError ? item.縮圖網址! : `/api/image-proxy?url=${encodeURIComponent(item.縮圖網址!)}`}
+                  src={proxyError ? item.縮圖網址! : `${ApiServiceFactory.getInstance().getEndpoint('imageProxy')}?url=${encodeURIComponent(item.縮圖網址!)}`}
                   alt={item.項目}
                   crossOrigin={proxyError ? undefined : "anonymous"}
                   className="w-full h-full object-cover"

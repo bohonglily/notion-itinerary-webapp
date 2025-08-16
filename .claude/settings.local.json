@@ -9,7 +9,20 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm run dev:netlify:*)",
+      "Bash(timeout 5 npx netlify functions:serve)",
+      "Bash(npx netlify functions:list:*)",
+      "Bash(node:*)",
+      "Bash(for file in *.js)",
+      "Bash(do echo \"Checking $file\")",
+      "Bash(done)",
+      "Bash(curl:*)",
+      "Bash(npx netlify functions:serve:*)",
+      "Bash(timeout:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill:*)",
+      "Bash(echo $NODE_ENV)"
     ],
     "deny": []
   }

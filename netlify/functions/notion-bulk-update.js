@@ -1,13 +1,36 @@
 import { Client } from '@notionhq/client';
 
 export const handler = async (event) => {
+  // 處理 CORS 預檢請求
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      },
+      body: ''
+    };
+  }
+
+  // 只允許 POST 請求
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return {
+      statusCode: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
   }
 
   try {
     const { updates } = JSON.parse(event.body);
-    const notion = new Client({ auth: process.env.VITE_NOTION_API_KEY });
+    // 優先使用伺服器端變數
+    const notionApiKey = process.env.NOTION_API_KEY || process.env.VITE_NOTION_API_KEY;
+    const notion = new Client({ auth: notionApiKey });
 
     if (!updates || !Array.isArray(updates)) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid updates array' }) };
@@ -30,7 +53,10 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({ message: 'Bulk update processed', results }),
     };
   } catch (error) {
@@ -38,7 +64,10 @@ export const handler = async (event) => {
     console.error('Full error object in catch block:', error);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({ error: 'Failed to process bulk update', details: error.message }),
     };
   }

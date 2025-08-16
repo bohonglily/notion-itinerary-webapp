@@ -43,8 +43,8 @@ export const handler = async (event) => {
       };
     }
 
-    // 從環境變數取得 Notion API Key
-    const notionApiKey = process.env.VITE_NOTION_API_KEY;
+    // 從環境變數取得 Notion API Key（優先使用伺服器端變數）
+    const notionApiKey = process.env.NOTION_API_KEY || process.env.VITE_NOTION_API_KEY;
     if (!notionApiKey) {
       return {
         statusCode: 500,

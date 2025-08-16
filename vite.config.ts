@@ -7,10 +7,15 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
+      // 支援 Netlify Functions 路徑
+      '/.netlify/functions': {
         target: 'http://localhost:8888',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/.netlify/functions'),
+      },
+      // 保留 API 路徑支援（用於 Vercel 測試）
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
       },
     },
   },
