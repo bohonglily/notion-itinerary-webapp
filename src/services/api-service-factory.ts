@@ -52,10 +52,8 @@ export class ApiServiceFactory {
         basePath = `${origin}/api`;
         console.log('🔧 API Service Factory: Detected Vercel platform', { origin, basePath });
       } else if (isDev) {
-        // 開發環境：檢查是否有 Netlify Dev
-        basePath = origin.includes('localhost:8888') 
-          ? `${origin}/.netlify/functions`
-          : `${origin}/api`;
+        // 開發環境：使用相對路徑
+        basePath = '/api';
         console.log('🔧 API Service Factory: Development environment', { origin, basePath });
       } else {
         // 預設使用 Netlify 格式

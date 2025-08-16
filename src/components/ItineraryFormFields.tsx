@@ -113,6 +113,21 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
+      {/* Reference Materials */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">參考資料</label>
+        <textarea
+          value={item.參考資料 || ''}
+          onChange={(e) => handleFieldChange('參考資料', e.target.value)}
+          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          rows={2}
+          placeholder="參考資料和連結，格式：(https://example.com)..."
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          提示：使用 (https://網址) 格式會自動顯示為 🔗 連結
+        </p>
+      </div>
+
       {/* To-Do */}
       <div>
         <label className="block text-sm font-medium text-gray-700">待辦</label>

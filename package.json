@@ -4,8 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5173",
-    "dev:netlify": "concurrently \"npx vite --port 5173\" \"npx netlify functions:serve\"",
+    "dev": "netlify dev",
+    "dev:vite": "vite --port 5173",
+    "dev:netlify": "netlify dev",
     "dev:vercel": "vercel dev",
     "build": "vite build",
     "build:netlify": "npm run build",
@@ -14,8 +15,7 @@
     "preview": "vite preview",
     "deploy:netlify": "netlify deploy --prod",
     "deploy:vercel": "vercel --prod",
-    "platform:detect": "node -e \"console.log('Platform:', require('./src/serverless/config/deployment.js').DeploymentManager.detectPlatform())\"",
-    "platform:info": "node -e \"console.log(JSON.stringify(require('./src/serverless/config/deployment.js').DeploymentManager.getPlatformInfo(), null, 2))\""
+    "netlify:dev": "netlify dev"
   },
   "dependencies": {
     "@notionhq/client": "^2.3.0",

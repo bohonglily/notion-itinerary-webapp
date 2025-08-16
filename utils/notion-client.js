@@ -16,6 +16,7 @@ export function transformNotionPage(page) {
     時段: properties.時段?.multi_select?.map(item => item.name) || [],
     GoogleMaps: properties.GoogleMaps?.url || '',
     重要資訊: properties.重要資訊?.rich_text?.[0]?.plain_text || '',
+    參考資料: properties.參考資料?.rich_text?.[0]?.plain_text || '',
     人均價: properties.人均價?.number || null,
     前往方式: properties.前往方式?.rich_text?.[0]?.plain_text || '',
     待辦: properties.待辦?.rich_text?.[0]?.plain_text || '',
@@ -124,6 +125,7 @@ export function buildNotionProperties(item) {
   if (item.人均價 !== null && item.人均價 !== undefined) properties['人均價'] = { number: item.人均價 };
   if (item.前往方式) properties['前往方式'] = { rich_text: [{ text: { content: item.前往方式 } }] };
   if (item.重要資訊) properties['重要資訊'] = { rich_text: [{ text: { content: item.重要資訊 } }] };
+  if (item.參考資料) properties['參考資料'] = { rich_text: [{ text: { content: item.參考資料 } }] };
   if (item.待辦) properties['待辦'] = { rich_text: [{ text: { content: item.待辦 } }] };
   if (item.排序 !== null && item.排序 !== undefined) properties['排序'] = { number: item.排序 };
   

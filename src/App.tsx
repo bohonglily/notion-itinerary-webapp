@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, AlertCircle, Settings, Sparkles, Image, Edit, X, RotateCw, Eye, EyeOff } from 'lucide-react';
+import { MapPin, AlertCircle, Settings, Sparkles, Image, Edit, X, RotateCw, Eye, EyeOff, Sliders } from 'lucide-react';
 import { useUrlParams } from './hooks/useUrlParams';
 import { useItinerary } from './hooks/useItinerary';
 import { useHistory } from './hooks/useHistory';
@@ -16,6 +16,7 @@ import { aiManager } from './services/ai/ai-manager'; // Import aiManager
 import { notionService } from './services/notion-service'; // Import notionService
 import { cacheService } from './services/cache-service'; // Import cacheService
 import { useVisibility } from './contexts/VisibilityContext';
+import FieldVisibilityMenu from './components/FieldVisibilityMenu';
 
 interface FloatingMenuProps {
   itineraryData: ItineraryData | null;
@@ -57,8 +58,8 @@ const AppContent: React.FC = () => {
   const { addToHistory } = useHistory();
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false); // State for password prompt modal
   const [showAdminPanelModal, setShowAdminPanelModal] = useState(false); // State for AdminPanel modal
+  const [showFieldVisibilityMenu, setShowFieldVisibilityMenu] = useState(false); // State for field visibility menu
   const { mode, toggleMode } = useMode();
-  const { isDescriptionVisible, toggleDescriptionVisibility } = useVisibility();
   
   const { data, groupedData, isLoading, error, reload } = useItinerary(databaseId || '', startDate, endDate);
   const [isProcessing, setIsProcessing] = useState(false); // New state for AI processing
@@ -180,13 +181,20 @@ const AppContent: React.FC = () => {
         >
           {mode === 'browse' ? <Edit size={24} /> : <X size={24} />}
         </button>
-        <button
-          onClick={toggleDescriptionVisibility}
-          className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-          aria-label={isDescriptionVisible ? 'Hide descriptions' : 'Show descriptions'}
-        >
-          {isDescriptionVisible ? <EyeOff size={24} /> : <Eye size={24} />}
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowFieldVisibilityMenu(!showFieldVisibilityMenu)}
+            className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+            aria-label="欄位顯示設定"
+          >
+            <Sliders size={24} />
+          </button>
+          {showFieldVisibilityMenu && (
+            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2">
+              <FieldVisibilityMenu onClose={() => setShowFieldVisibilityMenu(false)} />
+            </div>
+          )}
+        </div>
         <FloatingMenu itineraryData={data} onToggleAdminPanel={toggleAdminPanel} />
       </div>
       <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200">

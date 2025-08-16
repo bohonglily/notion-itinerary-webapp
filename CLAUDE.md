@@ -26,6 +26,12 @@
 - 支援批量圖片搜尋和更新
 - 圖片代理服務（避免 CORS 問題）
 
+### 📝 參考資料管理
+- **智能連結渲染**：`(URL)` 格式自動轉換為可點擊的 🔗 連結
+- **多連結支援**：一個欄位可包含多個參考資料連結
+- **簡化輸入**：只需在括號內輸入 URL，無需複雜 Markdown 語法
+- **視覺統一**：所有連結統一顯示為 🔗 連結 格式
+
 ### 💾 智能快取系統
 - 本地瀏覽器快取機制
 - 減少 API 呼叫頻率
@@ -37,6 +43,7 @@
 - 浮動式操作選單
 - 深色模式切換（部分實作）
 - 景點介紹顯示/隱藏切換
+- **參考資料智能連結**：支援 `(URL)` 格式自動渲染為 🔗 連結
 
 ### 🔐 管理者功能
 - 密碼保護的管理面板
@@ -232,6 +239,7 @@ Notion 資料庫 → Serverless Functions (Netlify/Vercel) → Frontend Cache �
 | 時段 | Multi-select | 時間段（上午、下午、晚上） |
 | GoogleMaps | URL | Google Maps 連結 |
 | 重要資訊 | Rich Text | 重要注意事項 |
+| 參考資料 | Rich Text | 參考資料和連結 |
 | 人均價 | Number | 每人費用 |
 | 前往方式 | Rich Text | 交通方式 |
 | 待辦 | Rich Text | 待辦事項 |
@@ -451,11 +459,13 @@ src/services/                 # 前端服務 (TypeScript)
 ### 🛠️ 開發和部署指令
 
 ```bash
-# 本地開發
-npm run dev                   # 前端開發伺服器
+# 本地開發（推薦）
+npm run dev                   # 使用 Netlify Dev，前端+API 同端口 (8888)
 
-# Netlify 本地測試
-npm run netlify:dev          # 包含 Functions 的完整測試
+# 其他開發模式
+npm run dev:vite             # 僅前端開發伺服器 (5173)
+npm run dev:netlify          # Netlify Dev 完整環境 (8888)
+npm run dev:vercel           # Vercel Dev 環境（需要先 vercel login）
 
 # 建置
 npm run build                # 建置前端靜態檔案
@@ -463,6 +473,31 @@ npm run build                # 建置前端靜態檔案
 # 部署
 netlify deploy --prod        # 部署到 Netlify
 vercel --prod               # 部署到 Vercel
+```
+
+### 🧪 Vercel 本地測試指南
+
+要在本地測試 Vercel 環境：
+
+1. **登入 Vercel CLI**：
+   ```bash
+   vercel login
+   ```
+
+2. **啟動 Vercel Dev**：
+   ```bash
+   npm run dev:vercel
+   ```
+
+3. **環境變數設定**：
+   - Vercel Dev 會自動讀取 `.env` 文件
+   - 或在 Vercel 專案設定中配置環境變數
+
+4. **端點測試**：
+   - 前端：通常在 `http://localhost:3000`
+   - API：自動處理 `/api/*` 路由
+   - API 工廠會自動選擇正確的端點
+
 ```
 
 ### 📊 API 端點自動選擇

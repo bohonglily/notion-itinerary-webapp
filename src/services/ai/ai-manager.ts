@@ -1,9 +1,6 @@
 import { AIProvider, ProviderInfo, NotionItineraryItem } from '../../types';
 import { GeminiProvider } from './gemini-provider';
-import { OpenAIProvider } from './openai-provider';
-import { ClaudeProvider } from './claude-provider';
 import { AI_CONFIG, AI_PROVIDERS } from '../../config/ai-config';
-import { OpenRouterProvider } from './openrouter-provider';
 import { pexelsService } from '../pexels-service';
 import { logger } from '../logger-service';
 
@@ -17,7 +14,7 @@ export class AIManager {
   }
 
   private initializeProviders(): void {
-    logger.info('AI_MANAGER', 'Initializing AI providers');
+    logger.info('AI_MANAGER', 'Initializing Gemini AI provider');
     
     // Initialize Gemini provider
     if (AI_PROVIDERS.gemini.apiKey) {
@@ -26,33 +23,8 @@ export class AIManager {
         AI_PROVIDERS.gemini.endpoint
       ));
       logger.debug('AI_MANAGER', 'Gemini provider initialized');
-    }
-
-    // Initialize OpenAI provider
-    if (AI_PROVIDERS.openai.apiKey) {
-      this.providers.set('openai', new OpenAIProvider(
-        AI_PROVIDERS.openai.apiKey,
-        AI_PROVIDERS.openai.endpoint
-      ));
-      logger.debug('AI_MANAGER', 'OpenAI provider initialized');
-    }
-
-    // Initialize Claude provider
-    if (AI_PROVIDERS.claude.apiKey) {
-      this.providers.set('claude', new ClaudeProvider(
-        AI_PROVIDERS.claude.apiKey,
-        AI_PROVIDERS.claude.endpoint
-      ));
-      logger.debug('AI_MANAGER', 'Claude provider initialized');
-    }
-
-    // Initialize OpenRouter provider
-    if (AI_PROVIDERS.openrouter.apiKey) {
-      this.providers.set('openrouter', new OpenRouterProvider(
-        AI_PROVIDERS.openrouter.apiKey,
-        AI_PROVIDERS.openrouter.endpoint
-      ));
-      logger.debug('AI_MANAGER', 'OpenRouter provider initialized');
+    } else {
+      logger.error('AI_MANAGER', 'Gemini API key not found');
     }
     
     logger.info('AI_MANAGER', 'Provider initialization complete', { 

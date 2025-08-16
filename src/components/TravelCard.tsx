@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { NotionItineraryItem } from '../types';
-import { DollarSign, Info, Trash2, Pencil, CheckSquare } from 'lucide-react';
+import { DollarSign, Info, Trash2, Pencil, CheckSquare, BookOpen } from 'lucide-react';
+import { renderTextWithLinks } from '../utils/text-renderer';
 import { useState, useEffect } from 'react';
 import { useUrlParams } from '../hooks/useUrlParams';
 import { useMode } from '../hooks/useMode';
@@ -19,7 +20,7 @@ const TitleSection = ({ item, hasImage }: { item: NotionItineraryItem; hasImage:
     <div className={`absolute bottom-0 left-0 right-0 p-4 z-10 flex justify-between items-center ${!hasImage ? 'pb-0' : ''}`}>
       {/* Left side: Title and Tags with a shared background */}
       <div className="bg-black/50 text-white py-2 px-4 rounded-lg shadow-lg flex items-center gap-3">
-        {Array.isArray(item.時段) && item.時段.length > 0 && (
+        {fieldVisibility.時段 && Array.isArray(item.時段) && item.時段.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center">
             {item.時段.map((time, idx) => (
               <span key={idx} className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full">
@@ -34,7 +35,7 @@ const TitleSection = ({ item, hasImage }: { item: NotionItineraryItem; hasImage:
       </div>
 
       {/* Right side: Google Maps Icon with its own background */}
-      {item.GoogleMaps && (
+      {fieldVisibility.GoogleMaps && item.GoogleMaps && (
         <div className="bg-white/90 p-2 rounded-full shadow-lg">
           <a href={item.GoogleMaps} target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-200" title="在 Google Maps 上查看">
             <img src="/googlemaps.png" alt="Google Maps" className="w-5 h-5" />
@@ -76,7 +77,7 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const { databaseId, startDate, endDate } = useUrlParams();
   const { mode } = useMode();
-  const { isDescriptionVisible } = useVisibility();
+  const { fieldVisibility } = useVisibility();
   const { updateNotionPage, deleteItineraryItem } = useItinerary(databaseId || '', startDate, endDate);
 
 
@@ -109,8 +110,8 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
         <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
           
           {/* Header: Image or White Placeholder, with Title Overlay */}
-          <div className={`relative overflow-hidden ${hasImage ? 'h-48' : 'h-16'}`}>
-            {hasImage ? (
+          <div className={`relative overflow-hidden ${hasImage && fieldVisibility.縮圖 ? 'h-48' : 'h-16'}`}>
+            {hasImage && fieldVisibility.縮圖 ? (
               <>
                 <img 
                   src={proxyError ? item.縮圖網址! : `/api/image-proxy?url=${encodeURIComponent(item.縮圖網址!)}`}
@@ -135,7 +136,7 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
               <div className="w-full h-full bg-white"></div>
             )}
             {/* The TitleSection is now outside the conditional, applying to both cases */}
-            <TitleSection item={item} hasImage={hasImage} />
+            <TitleSection item={item} hasImage={hasImage && fieldVisibility.縮圖} />
           </div>
 
           {/* Edit/Delete Icons */}
@@ -164,7 +165,7 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
               </div>
 
             {/* To-Do Items */}
-            {item.待辦 && (
+            {fieldVisibility.待辦 && item.待辦 && (
               <div className="text-sm mb-3 border-t border-gray-100 pt-3">
                 <div className="flex items-start gap-2">
                   <CheckSquare className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
@@ -176,15 +177,15 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
             )}
 
             {/* Important Info */}
-            {(item.重要資訊 || (item.人均價 || 0) > 0) && (
+            {((fieldVisibility.重要資訊 && item.重要資訊) || (fieldVisibility.人均價 && (item.人均價 || 0) > 0)) && (
               <div className="text-sm text-gray-600 mb-3 border-t border-gray-100 pt-3">
-                {item.重要資訊 && (
+                {fieldVisibility.重要資訊 && item.重要資訊 && (
                   <div className="flex items-start gap-2">
                     <Info className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
                     <LinkifiedText text={item.重要資訊} />
                   </div>
                 )}
-                {(item.人均價 || 0) > 0 && (
+                {fieldVisibility.人均價 && (item.人均價 || 0) > 0 && (
                   <div className="flex items-center gap-2 mt-1">
                     <DollarSign className="w-4 h-4 text-yellow-500" />
                     <span>{item.人均價}</span>
@@ -193,8 +194,20 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
               </div>
             )}
 
+            {/* Reference Materials */}
+            {fieldVisibility.參考資料 && item.參考資料 && (
+              <div className="text-sm text-gray-600 mb-3 border-t border-gray-100 pt-3">
+                <div className="flex items-start gap-2">
+                  <BookOpen className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-gray-700">
+                    {renderTextWithLinks(item.參考資料)}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Description */}
-            {isDescriptionVisible && item.景點介紹 && (
+            {fieldVisibility.景點介紹 && item.景點介紹 && (
               <div className="border-t border-gray-100 pt-3 mt-3">
                 <p className="text-gray-600 leading-relaxed">
                   {item.景點介紹}
