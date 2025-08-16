@@ -6,6 +6,8 @@ export interface DatabaseConfigItem {
   description?: string;
   databaseId: string;
   tags?: string[];
+  startDate?: string;
+  endDate?: string;
   lastUpdated?: string;
 }
 
@@ -24,6 +26,8 @@ class DatabaseConfigService {
           description: this.extractRichText(properties['描述'] || properties['Description']),
           databaseId: this.extractText(properties['資料庫ID'] || properties['DatabaseID'] || properties['Database ID']),
           tags: this.extractMultiSelect(properties['標籤'] || properties['Tags']),
+          startDate: this.extractDate(properties['開始日期'] || properties['StartDate'] || properties['Start Date']),
+          endDate: this.extractDate(properties['結束日期'] || properties['EndDate'] || properties['End Date']),
           lastUpdated: item.last_edited_time
         };
       }).filter(item => item.databaseId); // 只保留有資料庫ID的項目
@@ -54,6 +58,11 @@ class DatabaseConfigService {
   private extractMultiSelect(property: any): string[] {
     if (!property || !property.multi_select) return [];
     return property.multi_select.map((item: any) => item.name || '');
+  }
+
+  private extractDate(property: any): string | undefined {
+    if (!property || !property.date) return undefined;
+    return property.date.start || undefined;
   }
 
   getConfigDatabaseId(): string | null {

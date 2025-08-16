@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, ExternalLink, RefreshCw, Settings, Plus, Trash2 } from 'lucide-react';
+import { MapPin, ExternalLink, RefreshCw, Settings, Plus, Trash2, Calendar } from 'lucide-react';
 
 interface DatabaseItem {
   id: string;
@@ -7,6 +7,8 @@ interface DatabaseItem {
   description?: string;
   databaseId: string;
   tags?: string[];
+  startDate?: string;
+  endDate?: string;
   lastUpdated?: string;
 }
 
@@ -69,6 +71,8 @@ const DatabaseList: React.FC<DatabaseListProps> = ({
             <br />• 描述 (Rich Text)
             <br />• 資料庫ID (Text)
             <br />• 標籤 (Multi-select)
+            <br />• 開始日期 (Date) - 可選
+            <br />• 結束日期 (Date) - 可選
           </p>
           <form onSubmit={handleConfigSubmit} className="space-y-3">
             <input
@@ -142,6 +146,17 @@ const DatabaseList: React.FC<DatabaseListProps> = ({
                 </div>
                 {database.description && (
                   <p className="text-sm text-gray-600 mb-2">{database.description}</p>
+                )}
+                {(database.startDate || database.endDate) && (
+                  <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
+                    <Calendar size={14} />
+                    {database.startDate && database.endDate
+                      ? `${new Date(database.startDate).toLocaleDateString()} - ${new Date(database.endDate).toLocaleDateString()}`
+                      : database.startDate
+                      ? `從 ${new Date(database.startDate).toLocaleDateString()}`
+                      : `到 ${new Date(database.endDate!).toLocaleDateString()}`
+                    }
+                  </div>
                 )}
                 <div className="text-xs text-gray-400 font-mono">
                   ID: {database.databaseId}

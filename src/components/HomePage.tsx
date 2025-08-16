@@ -57,6 +57,8 @@ const HomePage: React.FC = () => {
   const handleDatabaseClick = (database: DatabaseConfigItem) => {
     const params = new URLSearchParams();
     params.set('databaseId', database.databaseId);
+    if (database.startDate) params.set('startDate', database.startDate);
+    if (database.endDate) params.set('endDate', database.endDate);
     
     window.location.href = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   };
