@@ -128,6 +128,7 @@ async getItineraryData(databaseId: string, startDate?: string | null, endDate?: 
         時段: item.時段 || [],
         GoogleMaps: item.GoogleMaps || '',
         重要資訊: item.重要資訊 || '',
+        參考資料: item.參考資料 || '',
         人均價: item.人均價 || 0,
         前往方式: item.前往方式 || '',
         待辦: item.待辦 || '',
