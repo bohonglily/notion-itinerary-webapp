@@ -58,21 +58,30 @@ export const handler = async (event) => {
 
     console.log('Fetching database info for:', databaseId);
 
-    // 直接呼叫 Notion API
-    const notionResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
-      method: 'GET',
+    // 查詢資料庫中的頁面來獲取最新的 last_edited_time
+    const queryResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${notionApiKey}`,
         'Notion-Version': '2022-06-28',
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        sorts: [
+          {
+            property: 'last_edited_time',
+            direction: 'descending'
+          }
+        ],
+        page_size: 1  // 只需要最新的一個頁面
+      })
     });
 
-    if (!notionResponse.ok) {
-      const errorText = await notionResponse.text();
+    if (!queryResponse.ok) {
+      const errorText = await queryResponse.text();
       console.error('Notion API error:', errorText);
       return {
-        statusCode: notionResponse.status,
+        statusCode: queryResponse.status,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
@@ -84,18 +93,34 @@ export const handler = async (event) => {
       };
     }
 
-    const databaseData = await notionResponse.json();
+    const queryData = await queryResponse.json();
+    
+    // 取得最新頁面的 last_edited_time，如果沒有頁面則使用資料庫的時間
+    let latestLastEditedTime;
+    if (queryData.results && queryData.results.length > 0) {
+      latestLastEditedTime = queryData.results[0].last_edited_time;
+      console.log('Latest page last_edited_time:', latestLastEditedTime);
+    } else {
+      // 如果沒有頁面，則取得資料庫本身的時間作為備案
+      const databaseResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${notionApiKey}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (databaseResponse.ok) {
+        const databaseData = await databaseResponse.json();
+        latestLastEditedTime = databaseData.last_edited_time;
+        console.log('Using database last_edited_time:', latestLastEditedTime);
+      } else {
+        throw new Error('Failed to get database info');
+      }
+    }
 
-    // 回傳資料庫資訊（與 Vercel 版本一致）
-    const result = {
-      id: databaseData.id,
-      title: databaseData.title?.[0]?.plain_text || 'Untitled',
-      lastEditedTime: databaseData.last_edited_time,
-      properties: Object.keys(databaseData.properties || {}),
-      url: databaseData.url
-    };
-
-    console.log(`Successfully fetched database info for ${databaseId}`);
+    console.log(`Successfully fetched latest last_edited_time for ${databaseId}: ${latestLastEditedTime}`);
 
     return {
       statusCode: 200,
@@ -104,7 +129,7 @@ export const handler = async (event) => {
         'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({
-        databaseLastEditedTime: databaseData.last_edited_time
+        databaseLastEditedTime: latestLastEditedTime
       })
     };
 
