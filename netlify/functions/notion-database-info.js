@@ -58,36 +58,97 @@ export const handler = async (event) => {
 
     console.log('Fetching database info for:', databaseId);
 
-    // 暫時回到原本的資料庫查詢方式，等確認基本功能正常後再優化
-    const databaseResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
-      method: 'GET',
+    // 查詢資料庫中最新的頁面來獲取真正的 last_edited_time
+    const queryResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${notionApiKey}`,
         'Notion-Version': '2022-06-28',
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        sorts: [
+          {
+            timestamp: 'last_edited_time',
+            direction: 'descending'
+          }
+        ],
+        page_size: 1
+      })
     });
 
-    if (!databaseResponse.ok) {
-      const errorText = await databaseResponse.text();
-      console.error('Notion API error:', errorText);
+    if (!queryResponse.ok) {
+      const errorText = await queryResponse.text();
+      console.error('Query API error:', errorText);
+      
+      // 如果查詢失敗，退回到查詢資料庫本身
+      console.log('Falling back to database last_edited_time');
+      const databaseResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${notionApiKey}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!databaseResponse.ok) {
+        const dbErrorText = await databaseResponse.text();
+        console.error('Database API error:', dbErrorText);
+        return {
+          statusCode: databaseResponse.status,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          },
+          body: JSON.stringify({ 
+            error: 'Notion API error',
+            details: dbErrorText
+          })
+        };
+      }
+
+      const databaseData = await databaseResponse.json();
       return {
-        statusCode: databaseResponse.status,
+        statusCode: 200,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
         },
-        body: JSON.stringify({ 
-          error: 'Notion API error',
-          details: errorText
+        body: JSON.stringify({
+          databaseLastEditedTime: databaseData.last_edited_time
         })
       };
     }
 
-    const databaseData = await databaseResponse.json();
+    const queryData = await queryResponse.json();
+    
+    // 取得最新頁面的 last_edited_time
+    let latestLastEditedTime;
+    if (queryData.results && queryData.results.length > 0) {
+      latestLastEditedTime = queryData.results[0].last_edited_time;
+      console.log('Latest page last_edited_time:', latestLastEditedTime);
+    } else {
+      // 如果沒有頁面，查詢資料庫本身
+      console.log('No pages found, using database last_edited_time');
+      const databaseResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${notionApiKey}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (databaseResponse.ok) {
+        const databaseData = await databaseResponse.json();
+        latestLastEditedTime = databaseData.last_edited_time;
+      } else {
+        throw new Error('Failed to get database info');
+      }
+    }
 
-    console.log(`Successfully fetched database info for ${databaseId}`);
-
+    console.log(`Returning last_edited_time: ${latestLastEditedTime}`);
     return {
       statusCode: 200,
       headers: {
@@ -95,7 +156,7 @@ export const handler = async (event) => {
         'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({
-        databaseLastEditedTime: databaseData.last_edited_time
+        databaseLastEditedTime: latestLastEditedTime
       })
     };
 

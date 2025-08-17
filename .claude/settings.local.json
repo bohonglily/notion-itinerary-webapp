@@ -24,7 +24,9 @@
       "Bash(taskkill:*)",
       "Bash(echo $NODE_ENV)",
       "Bash(npm install:*)",
-      "Bash(vercel dev:*)"
+      "Bash(vercel dev:*)",
+      "Bash(taskkill:*)",
+      "Bash(vercel:*)"
     ],
     "deny": []
   }
