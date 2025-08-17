@@ -3,7 +3,6 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 interface FieldVisibilitySettings {
   景點介紹: boolean;
   待辦: boolean;
-  重要資訊: boolean;
   人均價: boolean;
   參考資料: boolean;
   GoogleMaps: boolean;
@@ -23,7 +22,6 @@ interface VisibilityContextType {
 const DEFAULT_VISIBILITY: FieldVisibilitySettings = {
   景點介紹: false,
   待辦: true,
-  重要資訊: true,
   人均價: true,
   參考資料: true,
   GoogleMaps: true,

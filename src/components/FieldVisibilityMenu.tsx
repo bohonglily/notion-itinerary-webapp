@@ -9,7 +9,6 @@ interface FieldVisibilityMenuProps {
 const FIELD_NAMES = {
   景點介紹: '景點介紹',
   待辦: '待辦事項',
-  重要資訊: '重要資訊',
   人均價: '人均價格',
   參考資料: '參考資料',
   GoogleMaps: 'Google Maps',
@@ -51,6 +50,12 @@ const FieldVisibilityMenu: React.FC<FieldVisibilityMenuProps> = ({ onClose }) =>
             </div>
           </button>
         ))}
+      </div>
+      
+      <div className="px-4 py-2 border-t border-gray-100">
+        <p className="text-xs text-gray-500 leading-relaxed">
+          💡 重要資訊會永久顯示，無需手動切換
+        </p>
       </div>
       
       <div className="px-4 pt-3 border-t border-gray-200">

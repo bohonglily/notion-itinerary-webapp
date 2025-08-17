@@ -7,7 +7,8 @@
     "dev": "netlify dev",
     "dev:vite": "vite --port 5173",
     "dev:netlify": "netlify dev",
-    "dev:vercel": "vercel dev",
+    "dev:vercel": "vercel dev --listen 3000",
+    "dev:vercel-alt": "concurrently \"vite --port 5173\" \"vercel dev --listen 3001\"",
     "build": "vite build",
     "build:netlify": "npm run build",
     "build:vercel": "npm run build",
@@ -15,10 +16,13 @@
     "preview": "vite preview",
     "deploy:netlify": "netlify deploy --prod",
     "deploy:vercel": "vercel --prod",
-    "netlify:dev": "netlify dev"
+    "netlify:dev": "netlify dev",
+    "clean:ports": "taskkill /F /IM node.exe 2>nul || echo \"Ports cleaned\"",
+    "vercel:clean-start": "npm run clean:ports && npm run dev:vercel"
   },
   "dependencies": {
     "@notionhq/client": "^2.3.0",
+    "@tailwindcss/line-clamp": "^0.4.4",
     "@tanstack/react-query": "^5.17.0",
     "axios": "^1.10.0",
     "cors": "^2.8.5",

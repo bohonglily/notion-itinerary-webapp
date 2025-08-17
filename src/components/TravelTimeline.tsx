@@ -96,7 +96,7 @@ const TravelTimeline: React.FC<TravelTimelineProps> = ({ groupedItems }) => {
   return (
     <div 
       ref={timelineRef}
-      className="max-w-4xl mx-auto px-4 py-8 min-h-screen"
+      className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 min-h-screen bg-gradient-to-br from-secondary-50 via-white to-primary-50"
       onTouchStart={isTouchDevice ? onTouchStart : undefined}
       onTouchMove={isTouchDevice ? onTouchMove : undefined}
       onTouchEnd={isTouchDevice ? onTouchEnd : undefined}
@@ -107,36 +107,39 @@ const TravelTimeline: React.FC<TravelTimelineProps> = ({ groupedItems }) => {
         setSelectedDay={handleDayChange}
       />
 
-      <div className="mt-8">
+      <div className="mt-6 sm:mt-8">
         {mode === 'edit' && (
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6 sm:mb-8">
             <button 
               onClick={handleAddItinerary}
-              className="flex items-center gap-2 px-4 py-2 text-white bg-green-500 rounded-full hover:bg-green-600 transition-colors shadow-lg"
+              className="flex items-center gap-3 px-6 py-3 text-white bg-gradient-to-r from-success-500 to-success-600 rounded-2xl hover:from-success-600 hover:to-success-700 hover:scale-105 transition-all duration-200 shadow-floating font-medium"
             >
               <PlusCircle size={20} />
-              新增本日行程
+              <span className="hidden sm:inline">新增本日行程</span>
+              <span className="sm:hidden">新增行程</span>
             </button>
           </div>
         )}
 
-        {currentItems.map((item, index) => (
-          <React.Fragment key={item.id}>
-            {index > 0 && item.前往方式 && (
-              <div className="ml-4 mb-4 flex items-center gap-1 text-sm text-gray-600">
-                <ArrowDown className="w-5 h-5 text-blue-500" />
-                <span className="whitespace-pre-wrap">{item.前往方式}</span>
-              </div>
-            )}
-            <div className="mb-4">
+        <div className="space-y-6">
+          {currentItems.map((item, index) => (
+            <React.Fragment key={item.id}>
+              {index > 0 && item.前往方式 && (
+                <div className="flex items-center justify-center py-3">
+                  <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-md border border-secondary-200">
+                    <ArrowDown className="w-5 h-5 text-primary-500" />
+                    <span className="text-sm text-secondary-700 font-medium whitespace-pre-wrap">{item.前往方式}</span>
+                  </div>
+                </div>
+              )}
               <TravelCard 
                 key={item.id} 
                 item={item} 
                 index={index} 
               />
-            </div>
-          </React.Fragment>
-        ))}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
       <AddItineraryModal
         isOpen={showAddModal}
