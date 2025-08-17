@@ -18,7 +18,8 @@ export function renderTextWithLinks(text: string): React.ReactNode {
   while ((match = urlRegex.exec(text)) !== null) {
     // 添加 URL 前的文字
     if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index));
+      const textBeforeUrl = text.slice(lastIndex, match.index);
+      parts.push(renderTextWithNewlines(textBeforeUrl, `text-${lastIndex}`));
     }
 
     // 添加連結元素
@@ -41,15 +42,31 @@ export function renderTextWithLinks(text: string): React.ReactNode {
 
   // 添加剩餘的文字
   if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
+    const remainingText = text.slice(lastIndex);
+    parts.push(renderTextWithNewlines(remainingText, `text-${lastIndex}`));
   }
 
-  // 如果沒有找到任何 URL，返回原始文字
+  // 如果沒有找到任何 URL，返回原始文字（保持換行）
   if (parts.length === 0) {
-    return text;
+    return renderTextWithNewlines(text, 'text-full');
   }
 
   return <>{parts}</>;
+}
+
+/**
+ * 將文字中的換行符號轉換為 <br /> 元素
+ */
+function renderTextWithNewlines(text: string, keyPrefix: string): React.ReactNode {
+  if (!text) return null;
+  
+  const lines = text.split('\n');
+  return lines.map((line, index) => (
+    <React.Fragment key={`${keyPrefix}-${index}`}>
+      {line}
+      {index < lines.length - 1 && <br />}
+    </React.Fragment>
+  ));
 }
 
 /**
