@@ -54,5 +54,6 @@
       "main": true,
       "clean-main": true
     }
-  }
+  },
+  "public": true
 }
