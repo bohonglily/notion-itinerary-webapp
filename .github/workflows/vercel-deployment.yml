@@ -1,0 +1,122 @@
+name: Vercel Multi-Environment Deployment
+
+on:
+  push:
+    branches:
+      - main           # Production deployment
+      - clean-main     # Staging deployment
+  pull_request:
+    branches:
+      - main           # Preview deployment
+
+jobs:
+  # Staging deployment (clean-main branch)
+  deploy-staging:
+    if: github.ref == 'refs/heads/clean-main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      # - name: Run linting
+        # run: npm run lint
+        
+      - name: Build for staging
+        run: npm run build:staging
+        env:
+          NODE_ENV: staging
+          VITE_ENV: staging
+          
+      - name: Deploy to Vercel Staging
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          alias-domains: |
+            notion-itinerary-staging.vercel.app
+
+  # Production deployment (main branch)
+  deploy-production:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      # - name: Run linting
+        # run: npm run lint
+        
+      - name: Build for production
+        run: npm run build:production
+        env:
+          NODE_ENV: production
+          VITE_ENV: production
+          
+      - name: Deploy to Vercel Production
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
+
+  # Preview deployment (Pull Requests)
+  deploy-preview:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      # - name: Run linting
+        # run: npm run lint
+        
+      - name: Build for preview
+        run: npm run build
+        env:
+          NODE_ENV: development
+          VITE_ENV: preview
+          
+      - name: Deploy to Vercel Preview
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          github-comment: true
