@@ -58,30 +58,21 @@ export const handler = async (event) => {
 
     console.log('Fetching database info for:', databaseId);
 
-    // 查詢資料庫中的頁面來獲取最新的 last_edited_time
-    const queryResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
-      method: 'POST',
+    // 暫時回到原本的資料庫查詢方式，等確認基本功能正常後再優化
+    const databaseResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${notionApiKey}`,
         'Notion-Version': '2022-06-28',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        sorts: [
-          {
-            timestamp: 'last_edited_time',
-            direction: 'descending'
-          }
-        ],
-        page_size: 1  // 只需要最新的一個頁面
-      })
     });
 
-    if (!queryResponse.ok) {
-      const errorText = await queryResponse.text();
+    if (!databaseResponse.ok) {
+      const errorText = await databaseResponse.text();
       console.error('Notion API error:', errorText);
       return {
-        statusCode: queryResponse.status,
+        statusCode: databaseResponse.status,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
@@ -93,34 +84,9 @@ export const handler = async (event) => {
       };
     }
 
-    const queryData = await queryResponse.json();
-    
-    // 取得最新頁面的 last_edited_time，如果沒有頁面則使用資料庫的時間
-    let latestLastEditedTime;
-    if (queryData.results && queryData.results.length > 0) {
-      latestLastEditedTime = queryData.results[0].last_edited_time;
-      console.log('Latest page last_edited_time:', latestLastEditedTime);
-    } else {
-      // 如果沒有頁面，則取得資料庫本身的時間作為備案
-      const databaseResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${notionApiKey}`,
-          'Notion-Version': '2022-06-28',
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (databaseResponse.ok) {
-        const databaseData = await databaseResponse.json();
-        latestLastEditedTime = databaseData.last_edited_time;
-        console.log('Using database last_edited_time:', latestLastEditedTime);
-      } else {
-        throw new Error('Failed to get database info');
-      }
-    }
+    const databaseData = await databaseResponse.json();
 
-    console.log(`Successfully fetched latest last_edited_time for ${databaseId}: ${latestLastEditedTime}`);
+    console.log(`Successfully fetched database info for ${databaseId}`);
 
     return {
       statusCode: 200,
@@ -129,7 +95,7 @@ export const handler = async (event) => {
         'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({
-        databaseLastEditedTime: latestLastEditedTime
+        databaseLastEditedTime: databaseData.last_edited_time
       })
     };
 
