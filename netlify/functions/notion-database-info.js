@@ -69,7 +69,7 @@ export const handler = async (event) => {
       body: JSON.stringify({
         sorts: [
           {
-            property: 'last_edited_time',
+            timestamp: 'last_edited_time',
             direction: 'descending'
           }
         ],
