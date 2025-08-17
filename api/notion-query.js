@@ -112,22 +112,34 @@ export default async function handler(req, res) {
     const transformedData = notionData.results.map(page => {
       const properties = page.properties;
       
+      // 調試：記錄參考資料的原始結構
+      if (properties.參考資料?.rich_text?.length > 0) {
+        console.log('參考資料 rich_text structure:', JSON.stringify(properties.參考資料.rich_text, null, 2));
+      }
+      
       return {
         id: page.id,
         項目: properties.項目?.title?.[0]?.plain_text || '',
         日期: properties.日期?.date?.start || null,
         時段: properties.時段?.multi_select?.map(item => item.name) || [],
         GoogleMaps: properties.GoogleMaps?.url || '',
-        重要資訊: properties.重要資訊?.rich_text?.[0]?.plain_text || '',
-        參考資料: properties.參考資料?.rich_text?.[0]?.plain_text || '',
+        重要資訊: properties.重要資訊?.rich_text?.map(item => item.plain_text).join('') || '',
+        參考資料: properties.參考資料?.rich_text?.map(item => item.plain_text).join('') || '',
         人均價: properties.人均價?.number || null,
-        前往方式: properties.前往方式?.rich_text?.[0]?.plain_text || '',
-        待辦: properties.待辦?.rich_text?.[0]?.plain_text || '',
+        前往方式: properties.前往方式?.rich_text?.map(item => item.plain_text).join('') || '',
+        待辦: properties.待辦?.rich_text?.map(item => item.plain_text).join('') || '',
         縮圖網址: properties.縮圖網址?.url || '',
-        景點介紹: properties.景點介紹?.rich_text?.[0]?.plain_text || '',
+        景點介紹: properties.景點介紹?.rich_text?.map(item => item.plain_text).join('') || '',
         排序: properties.排序?.number || 0,
         lastEditedTime: page.last_edited_time
       };
+    });
+
+    // 調試：記錄轉換後的參考資料內容
+    transformedData.forEach(item => {
+      if (item.參考資料) {
+        console.log(`項目 "${item.項目}" 的參考資料內容:`, item.參考資料);
+      }
     });
 
     // 回傳前端期望的格式，包含資料庫資訊
