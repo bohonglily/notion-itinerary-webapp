@@ -185,7 +185,7 @@ const reloadMutation = useMutation({
         try {
             const contextParts = [];
           if (item.人均價) {
-            contextParts.push(`人均價: ${item.人均價}`);
+            contextParts.push(`人均價: ${item.幣別 || ''} ${item.人均價}`);
           }
           if (item.時段 && item.時段.length > 0) {
             contextParts.push(`時段: ${item.時段.join(', ')}`);

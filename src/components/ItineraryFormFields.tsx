@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NotionItineraryItem } from '../types';
+import { useItinerary } from '../hooks/useItinerary';
+import { useUrlParams } from '../hooks/useUrlParams';
 
 interface ItineraryFormFieldsProps {
   item: Partial<NotionItineraryItem>;
@@ -12,6 +14,31 @@ interface ItineraryFormFieldsProps {
 const timePeriodOptions = ['摘要', '清晨', '早餐', '上午', '午餐', '下午', '傍晚', '晚餐', '晚上', '深夜', '夜泊'];
 
 const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleFieldChange }) => {
+  const { databaseId, startDate, endDate } = useUrlParams();
+  const { data: itineraryData } = useItinerary(databaseId || '', startDate, endDate);
+  const [customCurrency, setCustomCurrency] = useState('');
+
+  // 從所有項目中獲取現有的幣別選項
+  const availableCurrencies = React.useMemo(() => {
+    if (!itineraryData?.items) return [];
+    const currencies = itineraryData.items
+      .map(item => item.幣別)
+      .filter(Boolean)
+      .filter(currency => currency.trim() !== '');
+    return [...new Set(currencies)];
+  }, [itineraryData]);
+
+  const handleCurrencySelect = (currency: string) => {
+    handleFieldChange('幣別', currency);
+    setCustomCurrency('');
+  };
+
+  const handleCustomCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCustomCurrency(value);
+    handleFieldChange('幣別', value);
+  };
+
   return (
     <>
       {/* Item Name */}
@@ -65,16 +92,56 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* Price */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">人均價</label>
-        <input
-          type="number"
-          value={item.人均價 || ''}
-          onChange={(e) => handleFieldChange('人均價', e.target.value === '' ? null : Number(e.target.value))}
-          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          placeholder="0"
-        />
+      {/* Price and Currency */}
+      <div className="space-y-3">
+        <label className="block text-sm font-medium text-gray-700">人均價與幣別</label>
+        
+        {/* Currency Selection */}
+        <div>
+          <div className="mb-2">
+            <span className="text-xs text-gray-500">選擇幣別：</span>
+          </div>
+          
+          {/* Currency buttons */}
+          {availableCurrencies.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {availableCurrencies.map((currency, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleCurrencySelect(currency)}
+                  className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                    item.幣別 === currency
+                      ? 'bg-blue-500 text-white border-blue-500'
+                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  {currency}
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {/* Custom currency input */}
+          <input
+            type="text"
+            value={item.幣別 && !availableCurrencies.includes(item.幣別) ? item.幣別 : customCurrency}
+            onChange={handleCustomCurrencyChange}
+            placeholder="或輸入新幣別 (如：USD, JPY, EUR)"
+            className="block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          />
+        </div>
+
+        {/* Price input */}
+        <div>
+          <input
+            type="number"
+            value={item.人均價 || ''}
+            onChange={(e) => handleFieldChange('人均價', e.target.value === '' ? null : Number(e.target.value))}
+            className="block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            placeholder="0"
+          />
+        </div>
       </div>
 
       {/* Google Maps */}

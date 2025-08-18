@@ -21,7 +21,7 @@ const TitleSection = ({ item, hasImage }: { item: NotionItineraryItem; hasImage:
     <div className={`absolute bottom-0 left-0 right-0 p-4 z-10 ${!hasImage ? 'pb-0' : ''}`}>
       {/* Simplified container with only title */}
       <div className="bg-gradient-to-r from-black/70 to-black/50 text-white py-3 px-4 rounded-xl shadow-floating backdrop-blur-sm">
-        <h3 className="text-lg sm:text-xl font-bold [text-shadow:_2px_2px_8px_rgb(0_0_0_/_90%)] break-words leading-tight line-clamp-2">
+        <h3 className="text-lg sm:text-xl font-bold [text-shadow:_2px_2px_8px_rgb(0_0_0_/_90%)] break-words leading-tight line-clamp-1">
           {item.項目}
         </h3>
       </div>
@@ -184,7 +184,7 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
                           <div className="flex items-center gap-1 bg-success-500/10 text-success-700 border border-success-300 px-2.5 py-1 rounded-full">
                             <DollarSign className="w-3 h-3" />
                             <span className="text-xs font-medium whitespace-nowrap">
-                              NT$ {item.人均價?.toLocaleString()}
+                              {item.幣別 || ''} {item.人均價?.toLocaleString()}
                             </span>
                           </div>
                         )}

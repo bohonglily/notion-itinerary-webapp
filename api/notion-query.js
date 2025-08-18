@@ -126,6 +126,7 @@ export default async function handler(req, res) {
         重要資訊: properties.重要資訊?.rich_text?.map(item => item.plain_text).join('') || '',
         參考資料: properties.參考資料?.rich_text?.map(item => item.plain_text).join('') || '',
         人均價: properties.人均價?.number || null,
+        幣別: properties.幣別?.rich_text?.map(item => item.plain_text).join('') || '',
         前往方式: properties.前往方式?.rich_text?.map(item => item.plain_text).join('') || '',
         待辦: properties.待辦?.rich_text?.map(item => item.plain_text).join('') || '',
         縮圖網址: properties.縮圖網址?.url || '',

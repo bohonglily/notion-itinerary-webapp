@@ -42,8 +42,29 @@ export class GeminiProvider extends AbstractAIProvider {
       throw new Error('Gemini API key not configured');
     }
 
-    const itemDetails = items.map(item => `- ID: ${item.id}, Name: ${item.name}`).join('\n');
-    const fullPrompt = `你是一個旅遊行程景點介紹生成器。請根據使用者提示，為每個項目生成繁體中文介紹。請以 JSON 陣列的格式回傳結果，每個物件包含 'id' 和 'description' 欄位。'id' 必須與原始景點的 ID 相符。如果無法生成介紹，'description' 欄位可以為空字串。\n\n使用者提示: ${prompt}\n\n景點列表:\n${itemDetails}`;
+    const itemDetails = items.map(item => {
+      const details = [`- ID: ${item.id}, Name: ${item.name}`];
+      if ((item as any).日期) details.push(`Date: ${(item as any).日期}`);
+      if ((item as any).時段) details.push(`Time: ${(item as any).時段.join(', ')}`);
+      if ((item as any).前往方式) details.push(`Transport: ${(item as any).前往方式}`);
+      if ((item as any).重要資訊) details.push(`Notes: ${(item as any).重要資訊.substring(0, 50)}...`);
+      return details.join(', ');
+    }).join('\n');
+
+    const fullPrompt = `你是一個旅遊行程景點介紹生成器。請根據使用者提示，為每個項目生成繁體中文介紹。
+
+重要指引：
+1. 只為真正的景點、餐廳、活動生成介紹
+2. 跳過以下類型的項目：交通資訊、行程摘要、待辦事項、純文字記錄
+3. 判斷標準：如果項目名稱包含「交通」、「搭乘」、「前往」、「摘要」、「TODO」、「備註」等關鍵字，則跳過
+4. 生成時請考慮日期、時段等上下文資訊
+5. 請以 JSON 陣列格式回傳結果，每個物件包含 'id' 和 'description' 欄位
+6. 不需要介紹的項目，'description' 欄位請設為空字串
+
+使用者提示: ${prompt}
+
+景點列表:
+${itemDetails}`;
 
     try {
       const response = await axios.post(

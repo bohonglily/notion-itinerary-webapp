@@ -98,6 +98,7 @@ export class NotionService {
     if (item.縮圖網址) properties['縮圖網址'] = { url: item.縮圖網址 };
     if (item.GoogleMaps) properties['GoogleMaps'] = { url: item.GoogleMaps };
         if (item.人均價 !== null && item.人均價 !== undefined) properties['人均價'] = { number: item.人均價 };
+    if (item.幣別) properties['幣別'] = { rich_text: [{ text: { content: item.幣別 } }] };
     if (item.前往方式) properties['前往方式'] = { rich_text: [{ text: { content: item.前往方式 } }] };
     if (item.重要資訊) properties['重要資訊'] = { rich_text: [{ text: { content: item.重要資訊 } }] };
     if (item.待辦) properties['待辦'] = { rich_text: [{ text: { content: item.待辦 } }] };
@@ -130,6 +131,7 @@ async getItineraryData(databaseId: string, startDate?: string | null, endDate?: 
         重要資訊: item.重要資訊 || '',
         參考資料: item.參考資料 || '',
         人均價: item.人均價 || 0,
+        幣別: item.幣別 || '',
         前往方式: item.前往方式 || '',
         待辦: item.待辦 || '',
         縮圖網址: item.縮圖網址 || '',

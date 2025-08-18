@@ -3,6 +3,10 @@ import { AIProvider, ProviderInfo } from '../../types';
 export interface ItemToProcess {
   id: string;
   name: string;
+  日期?: string;
+  時段?: string[];
+  前往方式?: string;
+  重要資訊?: string;
 }
 
 export interface GeneratedDescription {

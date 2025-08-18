@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, AlertCircle, Settings, Sparkles, Image, Edit, X, RotateCw, Eye, EyeOff, Sliders } from 'lucide-react';
+import { MapPin, AlertCircle, Settings, Sparkles, Edit, X, RotateCw, Eye, EyeOff, Sliders } from 'lucide-react';
 import { useUrlParams } from './hooks/useUrlParams';
 import { useItinerary } from './hooks/useItinerary';
 import { useHistory } from './hooks/useHistory';
@@ -92,21 +92,6 @@ const AppContent: React.FC = () => {
     setShowAdminPanelModal(false);
   };
 
-  const handleSearchImages = async () => {
-    if (!data) return;
-    setIsProcessing(true);
-    try {
-      const updatedItems = await aiManager.searchImagesBulk(data.items);
-      const imageUrls = updatedItems.map(item => item.縮圖網址 || '');
-      await notionService.bulkUpdateImages(data.items, imageUrls);
-      reload();
-    } catch (err) {
-      console.error("Failed to search images:", err);
-      alert("自動搜尋縮圖失敗！");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handleGenerateDescriptions = async (prompt: string) => {
     if (!data) return;
@@ -229,7 +214,6 @@ const AppContent: React.FC = () => {
       <Modal isOpen={showAdminPanelModal} onClose={handleCloseAdminPanel} title="管理員面板">
         <AdminPanel 
           onClose={handleCloseAdminPanel}
-          onSearchImages={handleSearchImages}
           onGenerateDescriptions={handleGenerateDescriptions}
           isProcessing={isProcessing}
           enhancementProgress={null} // Placeholder, replace with actual state if available

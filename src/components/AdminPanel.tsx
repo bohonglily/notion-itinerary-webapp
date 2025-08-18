@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { RefreshCw, Wand2, Settings, CheckCircle, AlertCircle, X, Sparkles, Image } from 'lucide-react';
+import { RefreshCw, Wand2, Settings, CheckCircle, AlertCircle, X, Sparkles } from 'lucide-react';
 import { aiManager } from '../services/ai/ai-manager';
 import { EnhancementProgress } from '../types';
 
 interface AdminPanelProps {
-  onSearchImages: () => Promise<void>;
   onGenerateDescriptions: (prompt: string) => Promise<void>;
   isProcessing: boolean;
   enhancementProgress: EnhancementProgress | null;
@@ -12,7 +11,6 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({
-  onSearchImages,
   onGenerateDescriptions,
   isProcessing,
   enhancementProgress,
@@ -20,7 +18,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 }) => {
   const [currentProvider, setCurrentProvider] = useState(aiManager.getCurrentProvider());
   const [showProviderInfo, setShowProviderInfo] = useState(false);
-  const [descriptionPrompt, setDescriptionPrompt] = useState(''); // Correctly defined here
+  const [descriptionPrompt, setDescriptionPrompt] = useState('每個景點50字以內，考慮時段與季節，風格活潑生動。跳過交通和摘要項目。'); // Enhanced default prompt
 
   const availableProviders = aiManager.getAvailableProviders();
   const providerInfo = aiManager.getAllProviderInfo();
@@ -36,7 +34,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const getProgressStageText = (stage: string) => {
     switch (stage) {
-      case 'images': return '搜尋圖片中...';
       case 'descriptions': return '生成描述中...';
       case 'writing': return '寫入資料中...';
       case 'complete': return '完成！';
@@ -106,17 +103,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         )}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <button
-          onClick={onSearchImages}
-          disabled={isProcessing}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Image className={`w-4 h-4 ${isProcessing ? 'animate-pulse' : ''}`} />
-          {isProcessing ? '搜尋縮圖中...' : 'AI 自動搜尋縮圖'}
-        </button>
+      {/* Usage Tips */}
+      <div className="mb-4 p-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+        <h4 className="text-sm font-semibold text-amber-800 mb-2">💡 智能生成說明</h4>
+        <div className="text-xs text-amber-700 space-y-1">
+          <p>• 系統會自動考慮日期、時段、交通方式等上下文資訊</p>
+          <p>• 自動跳過交通、摘要、備註等非景點項目</p>
+          <p>• 可在提示中指定風格、字數、重點內容</p>
+        </div>
+      </div>
 
+      {/* Action Buttons */}
+      <div className="mb-6">
         <div className="w-full">
           <label htmlFor="description-prompt" className="block text-sm font-medium text-gray-700 mb-1">景點介紹生成提示 (Prompt):</label>
           <textarea
@@ -125,7 +123,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             onChange={(e) => setDescriptionPrompt(e.target.value)}
             rows={3}
             className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 mb-2"
-            placeholder="每個項目50字以內，儘量精簡，活潑"
+            placeholder="每個景點50字以內，考慮時段與季節，風格活潑生動。跳過交通和摘要項目。"
           ></textarea>
           <button
             onClick={() => onGenerateDescriptions(descriptionPrompt)}

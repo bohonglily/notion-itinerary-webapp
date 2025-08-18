@@ -26,7 +26,8 @@
       "Bash(npm install:*)",
       "Bash(vercel dev:*)",
       "Bash(taskkill:*)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

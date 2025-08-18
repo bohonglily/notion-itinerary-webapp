@@ -84,7 +84,15 @@ export class AIManager {
       throw new Error(`Provider ${this.currentProvider} not available`);
     }
 
-    const itemsToProcess = items.map(item => ({ id: item.id, name: item.項目 }));
+    // Pass complete item data for better context
+    const itemsToProcess = items.map(item => ({ 
+      id: item.id, 
+      name: item.項目,
+      日期: item.日期,
+      時段: item.時段,
+      前往方式: item.前往方式,
+      重要資訊: item.重要資訊
+    }));
     const generatedData = await provider.generateBulkDescriptionsWithPrompt(itemsToProcess, prompt);
 
     const updatedItems = items.map(item => {
