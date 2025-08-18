@@ -4,7 +4,7 @@ import { aiManager } from '../services/ai/ai-manager';
 import { EnhancementProgress } from '../types';
 
 interface AdminPanelProps {
-  onGenerateDescriptions: (prompt: string) => Promise<void>;
+  onGenerateDescriptions: (prompt: string, forceRegenerate?: boolean) => Promise<void>;
   isProcessing: boolean;
   enhancementProgress: EnhancementProgress | null;
   onClose?: () => void; // New optional prop for closing the panel
@@ -19,6 +19,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [currentProvider, setCurrentProvider] = useState(aiManager.getCurrentProvider());
   const [showProviderInfo, setShowProviderInfo] = useState(false);
   const [descriptionPrompt, setDescriptionPrompt] = useState('每個景點50字以內，考慮時段與季節，風格活潑生動。跳過交通和摘要項目。'); // Enhanced default prompt
+  const [forceRegenerate, setForceRegenerate] = useState(false); // New state for generation mode
 
   const availableProviders = aiManager.getAvailableProviders();
   const providerInfo = aiManager.getAllProviderInfo();
@@ -110,6 +111,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
           <p>• 系統會自動考慮日期、時段、交通方式等上下文資訊</p>
           <p>• 自動跳過交通、摘要、備註等非景點項目</p>
           <p>• 可在提示中指定風格、字數、重點內容</p>
+          <p>• <strong>僅空白項目</strong>：只處理沒有景點介紹的項目（節省成本）</p>
+          <p>• <strong>重新生成全部</strong>：覆蓋所有現有介紹（獲得最新內容）</p>
         </div>
       </div>
 
@@ -122,16 +125,46 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             value={descriptionPrompt}
             onChange={(e) => setDescriptionPrompt(e.target.value)}
             rows={3}
-            className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 mb-2"
+            className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 mb-3"
             placeholder="每個景點50字以內，考慮時段與季節，風格活潑生動。跳過交通和摘要項目。"
           ></textarea>
+          
+          {/* Generation Mode Selection */}
+          <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+            <label className="block text-sm font-medium text-gray-700 mb-2">生成模式：</label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="generation-mode"
+                  checked={!forceRegenerate}
+                  onChange={() => setForceRegenerate(false)}
+                  className="text-blue-500 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">僅空白項目</span>
+                <span className="text-xs text-gray-500">（跳過已有介紹的項目）</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="generation-mode"
+                  checked={forceRegenerate}
+                  onChange={() => setForceRegenerate(true)}
+                  className="text-orange-500 focus:ring-orange-500"
+                />
+                <span className="text-sm text-gray-700">重新生成全部</span>
+                <span className="text-xs text-gray-500">（覆蓋所有現有介紹）</span>
+              </label>
+            </div>
+          </div>
+
           <button
-            onClick={() => onGenerateDescriptions(descriptionPrompt)}
+            onClick={() => onGenerateDescriptions(descriptionPrompt, forceRegenerate)}
             disabled={isProcessing}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Sparkles className={`w-4 h-4 ${isProcessing ? 'animate-pulse' : ''}`} />
-            {isProcessing ? '生成介紹中...' : 'AI 自動產生景點介紹'}
+            {isProcessing ? '生成介紹中...' : `AI 自動產生景點介紹 (${forceRegenerate ? '全部重新生成' : '僅空白項目'})`}
           </button>
         </div>
       </div>

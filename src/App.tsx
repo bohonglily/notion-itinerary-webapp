@@ -93,20 +93,56 @@ const AppContent: React.FC = () => {
   };
 
 
-  const handleGenerateDescriptions = async (prompt: string) => {
+  const handleGenerateDescriptions = async (prompt: string, forceRegenerate: boolean = false) => {
     if (!data) return;
     setIsProcessing(true);
     try {
-      const itemsToProcess = data.items.filter(item => !item.景點介紹 || item.景點介紹.trim() === '' || item.景點介紹.trim() === '沒有提供景點介紹。');
-      if (itemsToProcess.length === 0) {
-        alert("沒有找到需要生成景點介紹的項目。");
+      // Use aiManager's filtering logic instead of duplicating it here
+      const updatedItems = await aiManager.generateDescriptionsWithPromptBulk(data.items, prompt, forceRegenerate);
+      
+      // Extract only items that actually had descriptions generated
+      const itemsWithNewDescriptions = updatedItems.filter((item, index) => {
+        const originalItem = data.items[index];
+        return item.景點介紹 !== originalItem.景點介紹; // Description was changed
+      });
+
+      if (itemsWithNewDescriptions.length === 0) {
+        alert(forceRegenerate ? "沒有找到可以重新生成介紹的項目。" : "沒有找到需要生成景點介紹的項目。");
         return;
       }
-      const updatedItems = await aiManager.generateDescriptionsWithPromptBulk(itemsToProcess, prompt);
-      const descriptions = updatedItems.map(item => item.景點介紹 || '');
-      await notionService.bulkUpdateDescriptions(itemsToProcess, descriptions);
+
+      console.log(`🚀 開始分批更新 ${itemsWithNewDescriptions.length} 個項目到 Notion...`);
+      
+      // 分批更新到 Notion（每批10個項目）
+      const BATCH_SIZE = 10;
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (let i = 0; i < itemsWithNewDescriptions.length; i += BATCH_SIZE) {
+        const batch = itemsWithNewDescriptions.slice(i, i + BATCH_SIZE);
+        const descriptions = batch.map(item => item.景點介紹 || '');
+        
+        try {
+          console.log(`📝 更新批次 ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(itemsWithNewDescriptions.length / BATCH_SIZE)}（${batch.length} 個項目）`);
+          await notionService.bulkUpdateDescriptions(batch, descriptions);
+          successCount += batch.length;
+          console.log(`✅ 批次 ${Math.floor(i / BATCH_SIZE) + 1} 更新成功`);
+        } catch (err) {
+          console.error(`❌ 批次 ${Math.floor(i / BATCH_SIZE) + 1} 更新失敗:`, err);
+          errorCount += batch.length;
+        }
+        
+        // 批次間延遲，避免過於頻繁的請求
+        if (i + BATCH_SIZE < itemsWithNewDescriptions.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
       reload();
-      alert("自動產生景點介紹成功！");
+      const message = errorCount > 0 
+        ? `景點介紹更新完成！成功: ${successCount} 個，失敗: ${errorCount} 個。`
+        : `自動產生景點介紹成功！處理了 ${successCount} 個項目。`;
+      alert(message);
     } catch (err) {
       console.error("Failed to generate descriptions:", err);
       alert("自動產生景點介紹失敗！");

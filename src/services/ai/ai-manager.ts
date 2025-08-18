@@ -78,14 +78,45 @@ export class AIManager {
     return updatedItems;
   }
 
-  async generateDescriptionsWithPromptBulk(items: NotionItineraryItem[], prompt: string): Promise<NotionItineraryItem[]> {
+  async generateDescriptionsWithPromptBulk(items: NotionItineraryItem[], prompt: string, forceRegenerate: boolean = false): Promise<NotionItineraryItem[]> {
     const provider = this.providers.get(this.currentProvider);
     if (!provider) {
       throw new Error(`Provider ${this.currentProvider} not available`);
     }
 
+    // Filter items that need description generation
+    const itemsNeedingDescription = forceRegenerate 
+      ? items // Process all items when force regenerate is enabled
+      : items.filter(item => 
+          !item.景點介紹 || item.景點介紹.trim() === '' || item.景點介紹.trim() === '沒有提供景點介紹。'
+        );
+
+    if (itemsNeedingDescription.length === 0) {
+      logger.info('AI_MANAGER', 'No items need description generation');
+      return items;
+    }
+
+    logger.info('AI_MANAGER', `Generating descriptions for ${itemsNeedingDescription.length} items (force: ${forceRegenerate})`);
+
+    // 詳細記錄處理項目資訊
+    console.log('='.repeat(80));
+    console.log('📋 [AI MANAGER] 處理項目詳細資訊：');
+    console.log('='.repeat(80));
+    console.log(`🔄 強制重新生成模式: ${forceRegenerate ? '是' : '否'}`);
+    console.log(`📊 總項目數: ${items.length}`);
+    console.log(`✨ 需要處理的項目數: ${itemsNeedingDescription.length}`);
+    console.log('='.repeat(40));
+    console.log('需要處理的項目列表:');
+    itemsNeedingDescription.forEach((item, index) => {
+      console.log(`${index + 1}. ${item.項目} (ID: ${item.id})`);
+      if (item.日期) console.log(`   📅 日期: ${item.日期}`);
+      if (item.時段) console.log(`   ⏰ 時段: ${item.時段.join(', ')}`);
+      if (item.前往方式) console.log(`   🚗 交通: ${item.前往方式.substring(0, 30)}...`);
+    });
+    console.log('='.repeat(80));
+
     // Pass complete item data for better context
-    const itemsToProcess = items.map(item => ({ 
+    const itemsToProcess = itemsNeedingDescription.map(item => ({ 
       id: item.id, 
       name: item.項目,
       日期: item.日期,
@@ -93,7 +124,10 @@ export class AIManager {
       前往方式: item.前往方式,
       重要資訊: item.重要資訊
     }));
+    
+    console.log('🚀 [AI MANAGER] 開始呼叫 AI 服務...');
     const generatedData = await provider.generateBulkDescriptionsWithPrompt(itemsToProcess, prompt);
+    console.log('✅ [AI MANAGER] AI 服務呼叫完成');
 
     const updatedItems = items.map(item => {
       const matchedData = generatedData.find(data => data.id === item.id);
@@ -102,6 +136,25 @@ export class AIManager {
       }
       return item;
     });
+
+    // 記錄最終結果
+    const actuallyUpdated = updatedItems.filter((item, index) => 
+      item.景點介紹 !== items[index].景點介紹
+    );
+    
+    console.log('='.repeat(80));
+    console.log('🎉 [AI MANAGER] 處理結果統計：');
+    console.log('='.repeat(80));
+    console.log(`📊 預期處理項目數: ${itemsNeedingDescription.length}`);
+    console.log(`✅ 實際更新項目數: ${actuallyUpdated.length}`);
+    console.log('='.repeat(40));
+    console.log('實際更新的項目:');
+    actuallyUpdated.forEach((item, index) => {
+      console.log(`${index + 1}. ${item.項目}`);
+      console.log(`   📝 新介紹: ${item.景點介紹?.substring(0, 50)}...`);
+    });
+    console.log('='.repeat(80));
+
     return updatedItems;
   }
 

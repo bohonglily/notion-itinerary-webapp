@@ -66,6 +66,15 @@ export class GeminiProvider extends AbstractAIProvider {
 景點列表:
 ${itemDetails}`;
 
+    // 詳細記錄完整 prompt 內容
+    console.log('='.repeat(80));
+    console.log('🤖 [GEMINI PROMPT] 完整的 Prompt 內容：');
+    console.log('='.repeat(80));
+    console.log(fullPrompt);
+    console.log('='.repeat(80));
+    console.log(`📊 [GEMINI INFO] 處理 ${items.length} 個項目`);
+    console.log('='.repeat(80));
+
     try {
       const response = await axios.post(
         `${this.endpoint}:generateContent`,
@@ -84,7 +93,14 @@ ${itemDetails}`;
       );
 
       const rawResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      console.log('Gemini Raw Response:', rawResponse); // Log raw response
+      
+      // 詳細記錄 AI 回應內容
+      console.log('='.repeat(80));
+      console.log('🤖 [GEMINI RESPONSE] AI 完整回應內容：');
+      console.log('='.repeat(80));
+      console.log(rawResponse);
+      console.log('='.repeat(80));
+      
       if (!rawResponse) {
         throw new Error('Gemini API returned empty response for bulk descriptions.');
       }
@@ -97,6 +113,15 @@ ${itemDetails}`;
       }
 
       const generatedData: GeneratedDescription[] = JSON.parse(jsonString);
+      
+      // 記錄解析後的結果
+      console.log('='.repeat(80));
+      console.log('📄 [GEMINI PARSED] 解析後的 JSON 結果：');
+      console.log('='.repeat(80));
+      console.log('Generated Data:', JSON.stringify(generatedData, null, 2));
+      console.log(`✅ 成功生成 ${generatedData.length} 個項目的描述`);
+      console.log('='.repeat(80));
+      
       return generatedData;
     } catch (error) {
       console.error('Gemini Bulk API error:', error);

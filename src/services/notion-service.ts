@@ -23,12 +23,13 @@ export class NotionService {
   constructor() {
     this.apiFactory = ApiServiceFactory.getInstance();
   }
-  private async _makeRequest<T>(path: string, method: string, body?: object): Promise<T> {
+  private async _makeRequest<T>(path: string, method: string, body?: object, timeout?: number): Promise<T> {
     logger.apiRequest(method, path, body);
     
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 秒超時
+      const requestTimeout = timeout || 30000; // 預設30秒，可自訂
+      const timeoutId = setTimeout(() => controller.abort(), requestTimeout);
       
       const response = await window.fetch(path, {
         method,
@@ -209,7 +210,7 @@ async getItineraryData(databaseId: string, startDate?: string | null, endDate?: 
       }
     }));
     const endpoint = this.apiFactory.getEndpoint('notionBulkUpdate');
-    return this._makeRequest(endpoint, 'POST', { updates });
+    return this._makeRequest(endpoint, 'POST', { updates }, 120000); // 2分鐘超時
   }
 
   async getDatabaseLastEditedTime(databaseId: string): Promise<string> {
