@@ -8,7 +8,7 @@ import React from 'react';
 export function renderTextWithLinks(text: string): React.ReactNode {
   if (!text) return null;
 
-  // 正則表達式匹配 http:// 或 https://，支援完整的 URL 格式
+  // 正則表達式匹配 http:// 或 https:// 開頭的 URL
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   
   const parts: React.ReactNode[] = [];
