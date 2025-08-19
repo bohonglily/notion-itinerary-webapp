@@ -67,7 +67,6 @@ export function validateEnvironment(): EnvironmentValidationResult {
   const requiredVars = [
     { key: 'notionApiKey', name: 'VITE_NOTION_API_KEY', value: config.notionApiKey },
     { key: 'adminPassword', name: 'VITE_ADMIN_PASSWORD', value: config.adminPassword },
-    { key: 'pexelsApiKey', name: 'VITE_PEXELS_API_KEY', value: config.pexelsApiKey },
   ];
 
   for (const { key, name, value } of requiredVars) {
@@ -91,9 +90,10 @@ export function validateEnvironment(): EnvironmentValidationResult {
     }
   }
 
+
+  // 檢查 AI 提供商（可選）
   if (availableProviders.length === 0) {
-    errors.push('At least one AI provider API key is required (Gemini, OpenAI, Claude, or OpenRouter)');
-    missingRequired.push('AI_PROVIDER_API_KEY');
+    warnings.push('No AI provider API keys configured - AI features will not be available');
   }
 
   // 驗證 AI 提供商設定
