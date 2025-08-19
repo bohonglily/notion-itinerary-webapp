@@ -29,7 +29,9 @@ export class NotionService {
     try {
       const controller = new AbortController();
       const requestTimeout = timeout || 30000; // 預設30秒，可自訂
-      const timeoutId = setTimeout(() => controller.abort(), requestTimeout);
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, requestTimeout);
       
       const response = await window.fetch(path, {
         method,
@@ -85,6 +87,12 @@ export class NotionService {
       
       return result;
     } catch (error) {
+      // 處理 AbortError 並提供更友善的錯誤訊息
+      if (error instanceof Error && error.name === 'AbortError') {
+        const timeoutError = new Error(`Request timeout after ${timeout || 30000}ms: ${path}`);
+        logger.apiError(method, path, timeoutError);
+        throw timeoutError;
+      }
       logger.apiError(method, path, error as Error);
       throw error;
     }

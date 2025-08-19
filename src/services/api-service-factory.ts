@@ -62,9 +62,16 @@ export class ApiServiceFactory {
           basePath = `${origin}/api`;
           console.log('🔧 API Service Factory: Development environment (Vercel Dev)', { origin, basePath });
         } else {
-          // 預設使用 Netlify Functions
-          basePath = `${origin}/.netlify/functions`;
-          console.log('🔧 API Service Factory: Development environment (default Netlify)', { origin, basePath });
+          // 預設使用 Netlify Functions，但先檢查是否是純 Vite 開發環境
+          if (origin.includes('5173') || origin.includes('5174') || origin.includes('4173')) {
+            // Vite 開發環境：使用本地 Netlify Dev 服務
+            basePath = 'http://localhost:8888/.netlify/functions';
+            console.log('🔧 API Service Factory: Vite development environment (proxy to Netlify Dev)', { origin, basePath });
+          } else {
+            // 預設使用當前域名的 Netlify Functions
+            basePath = `${origin}/.netlify/functions`;
+            console.log('🔧 API Service Factory: Development environment (default Netlify)', { origin, basePath });
+          }
         }
       } else {
         // 預設使用 Netlify 格式
