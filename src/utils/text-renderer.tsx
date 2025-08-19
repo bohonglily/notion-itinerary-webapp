@@ -2,14 +2,14 @@ import React from 'react';
 
 /**
  * 解析包含 URL 的文字並渲染為可點擊的連結
- * 格式：(https://example.com) 或 (http://example.com)
+ * 格式：自動檢測 https://example.com 或 http://example.com
  * 渲染為：🔗 連結
  */
 export function renderTextWithLinks(text: string): React.ReactNode {
   if (!text) return null;
 
-  // 正則表達式匹配 (http://...) 或 (https://...)，支援 URL 中包含括號，文字可緊貼左括號
-  const urlRegex = /\s*\((https?:\/\/[^\s]+)\s*\)/g;
+  // 正則表達式匹配 http:// 或 https://，支援完整的 URL 格式
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
   
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -74,7 +74,7 @@ function renderTextWithNewlines(text: string, keyPrefix: string): React.ReactNod
  */
 export function hasLinks(text: string): boolean {
   if (!text) return false;
-  const urlRegex = /\s*\((https?:\/\/[^\s]+)\s*\)/g;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
   return urlRegex.test(text);
 }
 
@@ -84,7 +84,7 @@ export function hasLinks(text: string): boolean {
 export function extractUrls(text: string): string[] {
   if (!text) return [];
   
-  const urlRegex = /\s*\((https?:\/\/[^\s]+)\s*\)/g;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
   const urls: string[] = [];
   let match;
 

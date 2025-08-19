@@ -188,10 +188,10 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
           onChange={(e) => handleFieldChange('參考資料', e.target.value)}
           className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           rows={2}
-          placeholder="參考資料和連結，格式：(https://example.com)..."
+          placeholder="參考資料和連結，直接貼上網址即可..."
         />
         <p className="mt-1 text-xs text-gray-500">
-          提示：使用 (https://網址) 格式會自動顯示為 🔗 連結
+          提示：網址會自動顯示為 🔗 連結
         </p>
       </div>
 

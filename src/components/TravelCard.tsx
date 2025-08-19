@@ -29,30 +29,6 @@ const TitleSection = ({ item, hasImage }: { item: NotionItineraryItem; hasImage:
   );
 };
 
-const LinkifiedText = ({ text }: { text: string }) => {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const parts = text.split(urlRegex);
-
-  return (
-    <span className="whitespace-pre-wrap">
-      {parts.map((part, i) =>
-        urlRegex.test(part) ? (
-          <a
-            key={i}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            {part}
-          </a>
-        ) : (
-          <React.Fragment key={i}>{part}</React.Fragment>
-        )
-      )}
-    </span>
-  );
-};
 
 const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
   const [imageError, setImageError] = useState(false);
@@ -210,7 +186,7 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
                     <div className="flex items-start gap-3 p-3 bg-warning-50 rounded-xl border border-warning-200">
                       <CheckSquare className="w-5 h-5 text-warning-600 mt-0.5 flex-shrink-0" />
                       <div className="text-warning-800 font-medium whitespace-pre-wrap leading-relaxed break-words">
-                        <LinkifiedText text={item.待辦} />
+                        {renderTextWithLinks(item.待辦)}
                       </div>
                     </div>
                   </div>
@@ -224,7 +200,7 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
                     <div className="flex items-start gap-3 p-3 bg-danger-50 rounded-xl border border-danger-200">
                       <Info className="w-5 h-5 text-danger-600 mt-0.5 flex-shrink-0" />
                       <div className="text-danger-800 leading-relaxed font-medium whitespace-pre-wrap break-words overflow-wrap-anywhere">
-                        <LinkifiedText text={item.重要資訊} />
+                        {renderTextWithLinks(item.重要資訊)}
                       </div>
                     </div>
                   </div>
