@@ -12,10 +12,21 @@ import { useItinerary } from '../hooks/useItinerary';
 
 interface TravelTimelineProps {
   groupedItems: Map<string, NotionItineraryItem[]>;
+  selectedDay?: string | null; // 從 App 傳入的選中日期
+  setSelectedDay?: (day: string) => void; // 從 App 傳入的日期設定函數
+  isScrolled?: boolean; // 滾動狀態
 }
 
-const TravelTimeline: React.FC<TravelTimelineProps> = ({ groupedItems }) => {
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+const TravelTimeline: React.FC<TravelTimelineProps> = ({ 
+  groupedItems, 
+  selectedDay: propSelectedDay = null, 
+  setSelectedDay: propSetSelectedDay = null,
+  isScrolled = false
+}) => {
+  // 使用本地狀態作為後備，但優先使用從 App 傳入的狀態
+  const [localSelectedDay, setLocalSelectedDay] = useState<string | null>(null);
+  const selectedDay = propSelectedDay !== null ? propSelectedDay : localSelectedDay;
+  const setSelectedDay = propSetSelectedDay || setLocalSelectedDay;
   const [showAddModal, setShowAddModal] = useState(false);
   const { mode } = useMode();
   const { databaseId } = useUrlParams();
@@ -77,10 +88,10 @@ const TravelTimeline: React.FC<TravelTimelineProps> = ({ groupedItems }) => {
   };
 
   useEffect(() => {
-    if (sortedDays.length > 0 && !selectedDay) {
+    if (sortedDays.length > 0 && !selectedDay && !propSelectedDay) {
       setSelectedDay(sortedDays[0]);
     }
-  }, [sortedDays, selectedDay]);
+  }, [sortedDays, selectedDay, propSelectedDay]);
 
   const handleAddItinerary = () => {
     setShowAddModal(true);
@@ -105,6 +116,7 @@ const TravelTimeline: React.FC<TravelTimelineProps> = ({ groupedItems }) => {
         days={sortedDays}
         selectedDay={selectedDay}
         setSelectedDay={handleDayChange}
+        isScrolled={isScrolled}
       />
 
       <div className="mt-6 sm:mt-8">

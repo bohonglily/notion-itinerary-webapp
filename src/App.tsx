@@ -16,54 +16,21 @@ import { aiManager } from './services/ai/ai-manager'; // Import aiManager
 import { notionService } from './services/notion-service'; // Import notionService
 import { cacheService } from './services/cache-service'; // Import cacheService
 import { useVisibility } from './contexts/VisibilityContext';
-import FieldVisibilityMenu from './components/FieldVisibilityMenu';
+import { useScrollPosition } from './hooks/useScrollPosition';
+import MiniBottomBar from './components/MiniBottomBar';
 
-interface FloatingMenuProps {
-  itineraryData: ItineraryData | null;
-  onToggleAdminPanel: () => void;
-}
-
-const FloatingMenu: React.FC<FloatingMenuProps> = ({ itineraryData, onToggleAdminPanel }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleToggleAdminPanel = () => {
-    onToggleAdminPanel();
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-      >
-        {isOpen ? <X size={24} /> : <Settings size={24} />}
-      </button>
-      {isOpen && (
-        <div className="absolute bottom-full mb-2 w-64 bg-white rounded-lg shadow-xl py-2">
-          <button
-            onClick={handleToggleAdminPanel}
-            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <Settings size={16} /> 管理面板
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 const AppContent: React.FC = () => {
   const { databaseId, startDate, endDate } = useUrlParams();
   const { addToHistory } = useHistory();
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false); // State for password prompt modal
   const [showAdminPanelModal, setShowAdminPanelModal] = useState(false); // State for AdminPanel modal
-  const [showFieldVisibilityMenu, setShowFieldVisibilityMenu] = useState(false); // State for field visibility menu
   const { mode, toggleMode } = useMode();
+  const { isScrolled } = useScrollPosition(100); // 滾動監聽，100px 作為觸發閾值
+  const [selectedDay, setSelectedDay] = useState<string | null>(null); // 提升日期狀態到 App 層級
   
   const { data, groupedData, isLoading, error, reload } = useItinerary(databaseId || '', startDate, endDate);
   const [isProcessing, setIsProcessing] = useState(false); // New state for AI processing
-
 
   // Auto-save to history when data is successfully loaded
   useEffect(() => {
@@ -76,6 +43,14 @@ const AppContent: React.FC = () => {
       });
     }
   }, [data, databaseId, startDate, endDate, addToHistory]);
+
+  // 當資料載入完成時，設定預設選中的日期
+  const sortedDays = data ? Array.from(groupedData.keys()).sort((a, b) => a.localeCompare(b)) : [];
+  useEffect(() => {
+    if (sortedDays.length > 0 && !selectedDay) {
+      setSelectedDay(sortedDays[0]);
+    }
+  }, [sortedDays, selectedDay]);
 
   const toggleAdminPanel = () => setShowPasswordPrompt(true); // Open password prompt first
 
@@ -192,32 +167,32 @@ const AppContent: React.FC = () => {
     );
   }
 
+  // 統一的日期切換處理（包含自動滾動）
+  const handleDayChange = (day: string) => {
+    setSelectedDay(day);
+    
+    // 滾動到頂部
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50">
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
-        <button
-          onClick={toggleMode}
-          className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-          aria-label={mode === 'browse' ? '進入編輯模式' : '退出編輯模式'}
-        >
-          {mode === 'browse' ? <Edit size={24} /> : <X size={24} />}
-        </button>
-        <div className="relative">
-          <button
-            onClick={() => setShowFieldVisibilityMenu(!showFieldVisibilityMenu)}
-            className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-            aria-label="欄位顯示設定"
-          >
-            <Sliders size={24} />
-          </button>
-          {showFieldVisibilityMenu && (
-            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2">
-              <FieldVisibilityMenu onClose={() => setShowFieldVisibilityMenu(false)} />
-            </div>
-          )}
-        </div>
-        <FloatingMenu itineraryData={data} onToggleAdminPanel={toggleAdminPanel} />
-      </div>
+      
+      {/* 迷你底部欄 - 隨時顯示 */}
+      <MiniBottomBar
+        days={sortedDays}
+        selectedDay={selectedDay}
+        setSelectedDay={handleDayChange}
+        itineraryData={data}
+        onToggleAdminPanel={toggleAdminPanel}
+        isScrolled={isScrolled}
+      />
+      
       <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -237,8 +212,13 @@ const AppContent: React.FC = () => {
         </div>
       </header>
 
-      <main>
-        <TravelTimeline groupedItems={groupedData} />
+      <main className="pb-20">{/* 固定底部間距，因為 MiniBottomBar 隨時顯示 */}
+        <TravelTimeline 
+          groupedItems={groupedData}
+          selectedDay={selectedDay}
+          setSelectedDay={handleDayChange}
+          isScrolled={isScrolled}
+        />
       </main>
 
       {/* Password Prompt Modal */}

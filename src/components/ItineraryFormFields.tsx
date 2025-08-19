@@ -115,7 +115,18 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* 2. Time Period - Custom Multi-Select */}
+      {/* 2. Date */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">日期</label>
+        <input
+          type="date"
+          value={item.日期 || ''}
+          onChange={(e) => handleFieldChange('日期', e.target.value)}
+          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      {/* 3. Time Period - Custom Multi-Select */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">時段</label>
         
@@ -172,7 +183,7 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         </div>
       </div>
 
-      {/* 3. Sort Order */}
+      {/* 4. Sort Order */}
       <div>
         <label className="block text-sm font-medium text-gray-700">排序</label>
         <input
@@ -184,7 +195,7 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* 4. Google Maps */}
+      {/* 5. Google Maps */}
       <div>
         <label className="block text-sm font-medium text-gray-700">Google Maps</label>
         <input
@@ -196,7 +207,7 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* 5. Image URL */}
+      {/* 6. Image URL */}
       <div>
         <label className="block text-sm font-medium text-gray-700">縮圖網址</label>
         <input
@@ -208,7 +219,7 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* 6. Price with Currency */}
+      {/* 7. Price with Currency */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">人均價</label>
         
@@ -252,7 +263,7 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         </div>
       </div>
 
-      {/* 7. To-Do */}
+      {/* 8. To-Do */}
       <div>
         <label className="block text-sm font-medium text-gray-700">待辦</label>
         <textarea
@@ -268,7 +279,7 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* 8. Important Info */}
+      {/* 9. Important Info */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
           重要資訊
@@ -287,7 +298,7 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* 9. Reference Materials */}
+      {/* 10. Reference Materials */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
           參考資料
@@ -306,7 +317,7 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* 10. Description */}
+      {/* 11. Description */}
       <div>
         <label className="block text-sm font-medium text-gray-700">景點介紹</label>
         <textarea
