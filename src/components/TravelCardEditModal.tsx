@@ -45,7 +45,7 @@ const TravelCardEditModal: React.FC<TravelCardEditModalProps> = ({ isOpen, onClo
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`編輯：${item.項目}`} className={MODAL_WIDTH_CLASS} headerActions={headerActions}>
+    <Modal isOpen={isOpen} onClose={onClose} title="編輯行程項目" className={MODAL_WIDTH_CLASS} headerActions={headerActions}>
       <div className="p-4 space-y-4">
         <ItineraryFormFields item={editableItem} handleFieldChange={handleFieldChange} />
       </div>

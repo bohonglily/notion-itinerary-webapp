@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NotionItineraryItem } from '../types';
 import { useItinerary } from '../hooks/useItinerary';
 import { useUrlParams } from '../hooks/useUrlParams';
+import { ChevronDown, X } from 'lucide-react';
 
 interface ItineraryFormFieldsProps {
   item: Partial<NotionItineraryItem>;
@@ -17,6 +18,9 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
   const { databaseId, startDate, endDate } = useUrlParams();
   const { data: itineraryData } = useItinerary(databaseId || '', startDate, endDate);
   const [customCurrency, setCustomCurrency] = useState('');
+  const [showOtherCurrency, setShowOtherCurrency] = useState(false);
+  const [showTimePeriodDropdown, setShowTimePeriodDropdown] = useState(false);
+  const timePeriodRef = useRef<HTMLDivElement>(null);
 
   // 從所有項目中獲取現有的幣別選項
   const availableCurrencies = React.useMemo(() => {
@@ -29,8 +33,16 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
   }, [itineraryData]);
 
   const handleCurrencySelect = (currency: string) => {
-    handleFieldChange('幣別', currency);
+    if (currency === 'other') {
+      const newCurrency = prompt('請輸入幣別（如：USD, EUR）：');
+      if (newCurrency && newCurrency.trim()) {
+        handleFieldChange('幣別', newCurrency.trim());
+      }
+    } else {
+      handleFieldChange('幣別', currency);
+    }
     setCustomCurrency('');
+    setShowOtherCurrency(false);
   };
 
   const handleCustomCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,9 +51,59 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
     handleFieldChange('幣別', value);
   };
 
+  // 自動調整textarea高度
+  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  };
+
+  // 初始化時設定textarea高度
+  useEffect(() => {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+      if (textarea.value) {
+        adjustTextareaHeight(textarea as HTMLTextAreaElement);
+      }
+    });
+  }, [item]);
+
+  // 處理時段選擇
+  const handleTimePeriodSelect = (period: string) => {
+    const currentPeriods = item.時段 || [];
+    if (!currentPeriods.includes(period)) {
+      handleFieldChange('時段', [...currentPeriods, period]);
+    }
+    setShowTimePeriodDropdown(false);
+  };
+
+  // 移除時段
+  const removeTimePeriod = (periodToRemove: string) => {
+    const currentPeriods = item.時段 || [];
+    handleFieldChange('時段', currentPeriods.filter(p => p !== periodToRemove));
+  };
+
+  // 點擊外部關閉下拉選單
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (timePeriodRef.current && !timePeriodRef.current.contains(event.target as Node)) {
+        setShowTimePeriodDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // 取得可選的時段選項（排除已選的）
+  const availableTimePeriods = timePeriodOptions.filter(
+    period => !(item.時段 || []).includes(period)
+  );
+
   return (
     <>
-      {/* Item Name */}
+      {/* 1. Item Name */}
       <div>
         <label className="block text-sm font-medium text-gray-700">項目名稱</label>
         <input
@@ -53,98 +115,76 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* Time Period */}
+      {/* 2. Time Period - Custom Multi-Select */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">時段</label>
-        <select
-          multiple
-          value={item.時段 || []}
-          onChange={(e) => handleFieldChange('時段', Array.from(e.target.selectedOptions, option => option.value))}
-          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 h-24"
-        >
-          {timePeriodOptions.map(option => (
-            <option key={option} value={option}>{option}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Description */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">景點介紹</label>
-        <textarea
-          value={item.景點介紹 || ''}
-          onChange={(e) => handleFieldChange('景點介紹', e.target.value)}
-          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          rows={4}
-          placeholder="輸入景點介紹..."
-        />
-      </div>
-
-      {/* Image URL */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">縮圖網址</label>
-        <input
-          type="url"
-          value={item.縮圖網址 || ''}
-          onChange={(e) => handleFieldChange('縮圖網址', e.target.value)}
-          placeholder="縮圖網址"
-          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
-
-      {/* Price and Currency */}
-      <div className="space-y-3">
-        <label className="block text-sm font-medium text-gray-700">人均價與幣別</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">時段</label>
         
-        {/* Currency Selection */}
-        <div>
-          <div className="mb-2">
-            <span className="text-xs text-gray-500">選擇幣別：</span>
+        {/* Dropdown selector with selected tags inside */}
+        <div className="relative" ref={timePeriodRef}>
+          <div
+            className="w-full min-h-[2.5rem] p-2 border rounded-md shadow-sm bg-white text-sm focus-within:ring-blue-500 focus-within:border-blue-500 cursor-pointer"
+            onClick={() => setShowTimePeriodDropdown(!showTimePeriodDropdown)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex flex-wrap gap-1 flex-1 min-h-[1.25rem]">
+                {(item.時段 || []).length > 0 ? (
+                  (item.時段 || []).map(period => (
+                    <span
+                      key={period}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full border"
+                    >
+                      {period}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeTimePeriod(period);
+                        }}
+                        className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-400">選擇時段...</span>
+                )}
+              </div>
+              <ChevronDown size={16} className="text-gray-400 ml-2 flex-shrink-0" />
+            </div>
           </div>
           
-          {/* Currency buttons */}
-          {availableCurrencies.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {availableCurrencies.map((currency, index) => (
+          {/* Dropdown options */}
+          {showTimePeriodDropdown && availableTimePeriods.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+              {availableTimePeriods.map(period => (
                 <button
-                  key={index}
+                  key={period}
                   type="button"
-                  onClick={() => handleCurrencySelect(currency)}
-                  className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                    item.幣別 === currency
-                      ? 'bg-blue-500 text-white border-blue-500'
-                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                  }`}
+                  onClick={() => handleTimePeriodSelect(period)}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors"
                 >
-                  {currency}
+                  {period}
                 </button>
               ))}
             </div>
           )}
-          
-          {/* Custom currency input */}
-          <input
-            type="text"
-            value={item.幣別 && !availableCurrencies.includes(item.幣別) ? item.幣別 : customCurrency}
-            onChange={handleCustomCurrencyChange}
-            placeholder="或輸入新幣別 (如：USD, JPY, EUR)"
-            className="block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-          />
-        </div>
-
-        {/* Price input */}
-        <div>
-          <input
-            type="number"
-            value={item.人均價 || ''}
-            onChange={(e) => handleFieldChange('人均價', e.target.value === '' ? null : Number(e.target.value))}
-            className="block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            placeholder="0"
-          />
         </div>
       </div>
 
-      {/* Google Maps */}
+      {/* 3. Sort Order */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">排序</label>
+        <input
+          type="number"
+          value={item.排序 || ''}
+          onChange={(e) => handleFieldChange('排序', e.target.value === '' ? null : Number(e.target.value))}
+          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          placeholder="0"
+        />
+      </div>
+
+      {/* 4. Google Maps */}
       <div>
         <label className="block text-sm font-medium text-gray-700">Google Maps</label>
         <input
@@ -156,66 +196,129 @@ const ItineraryFormFields: React.FC<ItineraryFormFieldsProps> = ({ item, handleF
         />
       </div>
 
-      {/* Transportation */}
+      {/* 5. Image URL */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">前往方式</label>
-        <textarea
-          value={item.前往方式 || ''}
-          onChange={(e) => handleFieldChange('前往方式', e.target.value)}
+        <label className="block text-sm font-medium text-gray-700">縮圖網址</label>
+        <input
+          type="url"
+          value={item.縮圖網址 || ''}
+          onChange={(e) => handleFieldChange('縮圖網址', e.target.value)}
+          placeholder="縮圖網址"
           className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          rows={2}
-          placeholder="如何前往..."
         />
       </div>
 
-      {/* Important Info */}
+      {/* 6. Price with Currency */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">重要資訊</label>
-        <textarea
-          value={item.重要資訊 || ''}
-          onChange={(e) => handleFieldChange('重要資訊', e.target.value)}
-          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          rows={2}
-          placeholder="重要注意事項..."
-        />
+        <label className="block text-sm font-medium text-gray-700 mb-2">人均價</label>
+        
+        {/* Currency buttons and price input in same row */}
+        <div className="flex items-center gap-2">
+          {/* Currency buttons */}
+          <div className="flex gap-1">
+            {availableCurrencies.map((currency, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => handleCurrencySelect(currency)}
+                className={`px-2 py-2 text-xs rounded border transition-colors ${
+                  item.幣別 === currency
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                }`}
+              >
+                {currency}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => handleCurrencySelect('other')}
+              className="px-2 py-2 text-xs rounded border bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 transition-colors"
+            >
+              其他
+            </button>
+          </div>
+          
+          {/* Price input */}
+          <div className="flex-1">
+            <input
+              type="number"
+              value={item.人均價 || ''}
+              onChange={(e) => handleFieldChange('人均價', e.target.value === '' ? null : Number(e.target.value))}
+              className="block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              placeholder="人均價格"
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Reference Materials */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">參考資料</label>
-        <textarea
-          value={item.參考資料 || ''}
-          onChange={(e) => handleFieldChange('參考資料', e.target.value)}
-          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          rows={2}
-          placeholder="參考資料和連結，直接貼上網址即可..."
-        />
-        <p className="mt-1 text-xs text-gray-500">
-          提示：網址會自動顯示為 🔗 連結
-        </p>
-      </div>
-
-      {/* To-Do */}
+      {/* 7. To-Do */}
       <div>
         <label className="block text-sm font-medium text-gray-700">待辦</label>
         <textarea
           value={item.待辦 || ''}
-          onChange={(e) => handleFieldChange('待辦', e.target.value)}
-          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          rows={2}
+          onChange={(e) => {
+            handleFieldChange('待辦', e.target.value);
+            adjustTextareaHeight(e.target);
+          }}
+          onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[2.5rem] resize-none overflow-hidden"
           placeholder="待辦事項..."
+          style={{ height: 'auto' }}
         />
       </div>
 
-      {/* Sort Order */}
+      {/* 8. Important Info */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">排序</label>
-        <input
-          type="number"
-          value={item.排序 || ''}
-          onChange={(e) => handleFieldChange('排序', e.target.value === '' ? null : Number(e.target.value))}
-          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          placeholder="0"
+        <label className="block text-sm font-medium text-gray-700">
+          重要資訊
+          <span className="ml-2 text-xs text-blue-500 font-normal">網址會自動顯示為 🔗 連結</span>
+        </label>
+        <textarea
+          value={item.重要資訊 || ''}
+          onChange={(e) => {
+            handleFieldChange('重要資訊', e.target.value);
+            adjustTextareaHeight(e.target);
+          }}
+          onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[2.5rem] resize-none overflow-hidden"
+          placeholder="重要注意事項..."
+          style={{ height: 'auto' }}
+        />
+      </div>
+
+      {/* 9. Reference Materials */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          參考資料
+          <span className="ml-2 text-xs text-blue-500 font-normal">網址會自動顯示為 🔗 連結</span>
+        </label>
+        <textarea
+          value={item.參考資料 || ''}
+          onChange={(e) => {
+            handleFieldChange('參考資料', e.target.value);
+            adjustTextareaHeight(e.target);
+          }}
+          onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[2.5rem] resize-none overflow-hidden"
+          placeholder="參考資料和連結，直接貼上網址即可..."
+          style={{ height: 'auto' }}
+        />
+      </div>
+
+      {/* 10. Description */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">景點介紹</label>
+        <textarea
+          value={item.景點介紹 || ''}
+          onChange={(e) => {
+            handleFieldChange('景點介紹', e.target.value);
+            adjustTextareaHeight(e.target);
+          }}
+          onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+          className="mt-1 block w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[4rem] resize-none overflow-hidden"
+          placeholder="輸入景點介紹..."
+          style={{ height: 'auto' }}
         />
       </div>
     </>
