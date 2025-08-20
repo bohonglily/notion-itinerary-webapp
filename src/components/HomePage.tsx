@@ -3,7 +3,7 @@ import { MapPin, Calendar, Clock, Search, Trash2, Download, Upload, Plus, Extern
 import { useHistory } from '../hooks/useHistory';
 import { HistoryItem } from '../types';
 import DatabaseList from './DatabaseList';
-import { databaseConfigService, DatabaseConfigItem } from '../services/database-config-service';
+import { SavedDatabaseService, SavedDatabase } from '../services/supabase-service';
 import packageJson from '../../package.json';
 
 const HomePage: React.FC = () => {
@@ -15,23 +15,25 @@ const HomePage: React.FC = () => {
     startDate: '',
     endDate: ''
   });
-  const [databases, setDatabases] = useState<DatabaseConfigItem[]>([]);
+  const [databases, setDatabases] = useState<SavedDatabase[]>([]);
   const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
+  const [showAddDatabase, setShowAddDatabase] = useState(false);
+  const [newDatabase, setNewDatabase] = useState({
+    name: '',
+    notion_db_id: '',
+    start_date: '',
+    end_date: '',
+    description: ''
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredHistory = getFilteredHistory(searchTerm);
 
   // 載入資料庫列表
   const loadDatabaseList = async () => {
-    const configDatabaseId = databaseConfigService.getConfigDatabaseId();
-    if (!configDatabaseId) {
-      setDatabases([]);
-      return;
-    }
-
     setIsLoadingDatabases(true);
     try {
-      const databaseList = await databaseConfigService.getDatabaseList(configDatabaseId);
+      const databaseList = await SavedDatabaseService.getAllDatabases();
       setDatabases(databaseList);
     } catch (error) {
       console.error('Failed to load database list:', error);
@@ -55,11 +57,11 @@ const HomePage: React.FC = () => {
     window.location.href = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   };
 
-  const handleDatabaseClick = (database: DatabaseConfigItem) => {
+  const handleDatabaseClick = (database: SavedDatabase) => {
     const params = new URLSearchParams();
-    params.set('databaseId', database.databaseId);
-    if (database.startDate) params.set('startDate', database.startDate);
-    if (database.endDate) params.set('endDate', database.endDate);
+    params.set('databaseId', database.notion_db_id);
+    if (database.start_date) params.set('startDate', database.start_date);
+    if (database.end_date) params.set('endDate', database.end_date);
     
     window.location.href = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   };
@@ -74,6 +76,41 @@ const HomePage: React.FC = () => {
     if (manualInput.endDate) params.set('endDate', manualInput.endDate);
     
     window.location.href = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  };
+
+  const handleAddDatabase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDatabase.name.trim() || !newDatabase.notion_db_id.trim()) return;
+
+    try {
+      await SavedDatabaseService.createDatabase({
+        name: newDatabase.name.trim(),
+        notion_db_id: newDatabase.notion_db_id.trim(),
+        start_date: newDatabase.start_date || undefined,
+        end_date: newDatabase.end_date || undefined,
+        description: newDatabase.description.trim() || undefined,
+        is_active: true,
+        sort_order: databases.length
+      });
+      
+      // 重新載入資料庫列表
+      await loadDatabaseList();
+      
+      // 重置表單
+      setNewDatabase({
+        name: '',
+        notion_db_id: '',
+        start_date: '',
+        end_date: '',
+        description: ''
+      });
+      setShowAddDatabase(false);
+      
+      alert('資料庫新增成功！');
+    } catch (error) {
+      console.error('Failed to add database:', error);
+      alert('新增失敗：請檢查 Supabase 設定');
+    }
   };
 
   const handleImportClick = () => {
@@ -135,13 +172,172 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Database List Section */}
-        <DatabaseList 
-          databases={databases}
-          isLoading={isLoadingDatabases}
-          onRefresh={loadDatabaseList}
-          onDatabaseClick={handleDatabaseClick}
-        />
+        {/* Supabase Database List Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">常用資料庫</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAddDatabase(!showAddDatabase)}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+              >
+                <Plus size={16} />
+                新增資料庫
+              </button>
+              <button
+                onClick={loadDatabaseList}
+                disabled={isLoadingDatabases}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
+              >
+                <MapPin size={16} className={isLoadingDatabases ? 'animate-spin' : ''} />
+                重新載入
+              </button>
+            </div>
+          </div>
+
+          {showAddDatabase && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-medium text-gray-800 mb-3">新增常用資料庫</h3>
+              <form onSubmit={handleAddDatabase} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      資料庫名稱 *
+                    </label>
+                    <input
+                      type="text"
+                      value={newDatabase.name}
+                      onChange={(e) => setNewDatabase({ ...newDatabase, name: e.target.value })}
+                      placeholder="例：日本關西旅遊 2024"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Notion 資料庫 ID *
+                    </label>
+                    <input
+                      type="text"
+                      value={newDatabase.notion_db_id}
+                      onChange={(e) => setNewDatabase({ ...newDatabase, notion_db_id: e.target.value })}
+                      placeholder="Notion 資料庫 ID"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    描述
+                  </label>
+                  <textarea
+                    value={newDatabase.description}
+                    onChange={(e) => setNewDatabase({ ...newDatabase, description: e.target.value })}
+                    placeholder="資料庫簡短描述（可選）"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={2}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      預設開始日期
+                    </label>
+                    <input
+                      type="date"
+                      value={newDatabase.start_date}
+                      onChange={(e) => setNewDatabase({ ...newDatabase, start_date: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      預設結束日期
+                    </label>
+                    <input
+                      type="date"
+                      value={newDatabase.end_date}
+                      onChange={(e) => setNewDatabase({ ...newDatabase, end_date: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    儲存
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddDatabase(false)}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    取消
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {isLoadingDatabases ? (
+            <div className="text-center py-8">
+              <MapPin className="w-8 h-8 text-blue-500 mx-auto mb-2 animate-spin" />
+              <p className="text-gray-600">載入資料庫列表中...</p>
+            </div>
+          ) : databases.length === 0 ? (
+            <div className="text-center py-12">
+              <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-500 mb-2">還沒有常用資料庫</h3>
+              <p className="text-gray-400 mb-4">點擊「新增資料庫」來建立您的第一個常用資料庫</p>
+              <button
+                onClick={() => setShowAddDatabase(true)}
+                className="flex items-center gap-2 mx-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <Plus size={16} />
+                新增資料庫
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {databases.map((database) => (
+                <div
+                  key={database.id}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
+                  onClick={() => handleDatabaseClick(database)}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-medium text-gray-800">{database.name}</h3>
+                    </div>
+                    {database.description && (
+                      <p className="text-sm text-gray-600 mb-2">{database.description}</p>
+                    )}
+                    {(database.start_date || database.end_date) && (
+                      <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
+                        <Calendar size={14} />
+                        {database.start_date && database.end_date
+                          ? `${new Date(database.start_date).toLocaleDateString()} - ${new Date(database.end_date).toLocaleDateString()}`
+                          : database.start_date
+                          ? `從 ${new Date(database.start_date).toLocaleDateString()}`
+                          : `到 ${new Date(database.end_date!).toLocaleDateString()}`
+                        }
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-400 font-mono">
+                      ID: {database.notion_db_id}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Manual Input Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">

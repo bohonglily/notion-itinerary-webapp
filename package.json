@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@notionhq/client": "^2.3.0",
+    "@supabase/supabase-js": "^2.55.0",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@tanstack/react-query": "^5.17.0",
     "axios": "^1.10.0",
