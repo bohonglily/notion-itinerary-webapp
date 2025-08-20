@@ -1,6 +1,6 @@
 {
   "name": "notion-itinerary-webapp",
-  "alias": ["test-notion-itinerary-webapp.vercel.app"],
+  "alias": ["staging-notion-itinerary.vercel.app"],
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": "dist",
