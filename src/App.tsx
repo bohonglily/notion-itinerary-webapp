@@ -212,7 +212,7 @@ const AppContent: React.FC = () => {
         </div>
       </header>
 
-      <main className="pb-20">{/* 固定底部間距，因為 MiniBottomBar 隨時顯示 */}
+      <main className="pb-12">{/* 縮小底部間距，配合更緊湊的 MiniBottomBar */}
         <TravelTimeline 
           groupedItems={groupedData}
           selectedDay={selectedDay}
