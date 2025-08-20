@@ -133,11 +133,11 @@ const TravelTimeline: React.FC<TravelTimelineProps> = ({
           </div>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-3">
           {currentItems.map((item, index) => (
             <React.Fragment key={item.id}>
               {index > 0 && item.前往方式 && (
-                <div className="flex items-center justify-center py-3">
+                <div className="flex items-center justify-center py-0.5">
                   <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-md border border-secondary-200">
                     <ArrowDown className="w-5 h-5 text-primary-500" />
                     <span className="text-sm text-secondary-700 font-medium whitespace-pre-wrap">{item.前往方式}</span>

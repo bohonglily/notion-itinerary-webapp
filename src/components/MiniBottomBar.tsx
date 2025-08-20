@@ -52,12 +52,12 @@ const MiniBottomBar: React.FC<MiniBottomBarProps> = ({
     <>
       <div 
         className={`
-          fixed bottom-0 left-0 right-0 z-40 bg-white/20 backdrop-blur-md border-t border-gray-200/30 shadow-lg
+          fixed bottom-0 left-0 right-0 z-40 bg-transparent
           transition-transform duration-300 ease-out
           translate-y-0
         `}
       >
-        <div className="max-w-5xl mx-auto px-4 py-1.5">
+        <div className="max-w-5xl mx-auto px-8 py-1.5">
           <div className="flex items-center justify-between">
             {/* 左側：滾動時才顯示日期選擇器，未滾動時留空，為 iPhone 圓角留出空間 */}
             <div className="flex items-center ml-2">
