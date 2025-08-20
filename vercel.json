@@ -52,7 +52,7 @@
   },
   "git": {
     "deploymentEnabled": {
-      "main": true,
+      "main": false,
       "clean-main": true
     }
   },
