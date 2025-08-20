@@ -18,7 +18,6 @@ import { cacheService } from './services/cache-service'; // Import cacheService
 import { useVisibility } from './contexts/VisibilityContext';
 import { useScrollPosition } from './hooks/useScrollPosition';
 import MiniBottomBar from './components/MiniBottomBar';
-import packageJson from '../package.json';
 
 
 const AppContent: React.FC = () => {
@@ -201,16 +200,11 @@ const AppContent: React.FC = () => {
               <MapPin className="w-8 h-8 text-blue-500" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">{data.databaseName}</h1>
-                <div className="flex items-center gap-3">
-                  {data.databaseLastEditedTime && (
-                    <p className="text-xs text-gray-500">
-                      最後更新: {new Date(data.databaseLastEditedTime).toLocaleString()}
-                    </p>
-                  )}
-                  <span className="text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">
-                    v{packageJson.version}
-                  </span>
-                </div>
+                {data.databaseLastEditedTime && (
+                  <p className="text-xs text-gray-500">
+                    最後更新: {new Date(data.databaseLastEditedTime).toLocaleString()}
+                  </p>
+                )}
               </div>
             </div>
             

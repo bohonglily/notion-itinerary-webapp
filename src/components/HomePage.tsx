@@ -4,6 +4,7 @@ import { useHistory } from '../hooks/useHistory';
 import { HistoryItem } from '../types';
 import DatabaseList from './DatabaseList';
 import { databaseConfigService, DatabaseConfigItem } from '../services/database-config-service';
+import packageJson from '../../package.json';
 
 const HomePage: React.FC = () => {
   const { history, removeFromHistory, clearHistory, getFilteredHistory, exportHistory, importHistory } = useHistory();
@@ -126,7 +127,12 @@ const HomePage: React.FC = () => {
             <MapPin className="w-12 h-12 text-blue-500" />
             <h1 className="text-4xl font-bold text-gray-800">旅遊行程管理</h1>
           </div>
-          <p className="text-gray-600">管理您的 Notion 旅遊資料庫</p>
+          <div className="flex items-center justify-center gap-3">
+            <p className="text-gray-600">管理您的 Notion 旅遊資料庫</p>
+            <span className="text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded-full font-medium">
+              v{packageJson.version}
+            </span>
+          </div>
         </div>
 
         {/* Database List Section */}
