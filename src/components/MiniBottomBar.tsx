@@ -57,10 +57,10 @@ const MiniBottomBar: React.FC<MiniBottomBarProps> = ({
           translate-y-0
         `}
       >
-        <div className="max-w-5xl mx-auto px-3 py-1.5">
+        <div className="max-w-5xl mx-auto px-4 py-1.5">
           <div className="flex items-center justify-between">
-            {/* 左側：滾動時才顯示日期選擇器，未滾動時留空 */}
-            <div className="flex items-center">
+            {/* 左側：滾動時才顯示日期選擇器，未滾動時留空，為 iPhone 圓角留出空間 */}
+            <div className="flex items-center ml-2">
               {isScrolled && (
                 <button
                   onClick={() => setShowDaySelector(!showDaySelector)}
@@ -74,30 +74,30 @@ const MiniBottomBar: React.FC<MiniBottomBarProps> = ({
               )}
             </div>
 
-            {/* 右側：功能按鈕群組 - 總是靠右顯示 */}
-            <div className="flex items-center gap-1">
+            {/* 右側：功能按鈕群組 - 總是靠右顯示，為 iPhone 圓角留出空間 */}
+            <div className="flex items-center gap-1 mr-2">
               <button
                 onClick={toggleMode}
-                className="p-1.5 bg-gray-100/80 rounded-md hover:bg-gray-200/80 transition-colors"
+                className="p-2 bg-gray-100/80 rounded-md hover:bg-gray-200/80 transition-colors"
                 aria-label={mode === 'browse' ? '進入編輯模式' : '退出編輯模式'}
               >
-                {mode === 'browse' ? <Edit size={16} /> : <X size={16} />}
+                {mode === 'browse' ? <Edit size={17} /> : <X size={17} />}
               </button>
               
               <button
                 onClick={() => setShowFieldVisibilityMenu(!showFieldVisibilityMenu)}
-                className="p-1.5 bg-gray-100/80 rounded-md hover:bg-gray-200/80 transition-colors"
+                className="p-2 bg-gray-100/80 rounded-md hover:bg-gray-200/80 transition-colors"
                 aria-label="欄位顯示設定"
               >
-                <Sliders size={16} />
+                <Sliders size={17} />
               </button>
               
               <button
                 onClick={onToggleAdminPanel}
-                className="p-1.5 bg-gray-100/80 rounded-md hover:bg-gray-200/80 transition-colors"
+                className="p-2 bg-gray-100/80 rounded-md hover:bg-gray-200/80 transition-colors"
                 aria-label="管理面板"
               >
-                <Settings size={16} />
+                <Settings size={17} />
               </button>
             </div>
           </div>
