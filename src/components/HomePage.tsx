@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapPin, Calendar, Clock, Search, Trash2, Download, Upload, Plus, ExternalLink } from 'lucide-react';
+import { MapPin, Calendar, Clock, Search, Trash2, Download, Upload, Plus, ExternalLink, Edit3, Shield, Eye, EyeOff } from 'lucide-react';
 import { useHistory } from '../hooks/useHistory';
 import { HistoryItem } from '../types';
 import DatabaseList from './DatabaseList';
@@ -18,6 +18,10 @@ const HomePage: React.FC = () => {
   const [databases, setDatabases] = useState<SavedDatabase[]>([]);
   const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
   const [showAddDatabase, setShowAddDatabase] = useState(false);
+  const [editingDatabase, setEditingDatabase] = useState<SavedDatabase | null>(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [newDatabase, setNewDatabase] = useState({
     name: '',
     notion_db_id: '',
@@ -28,6 +32,25 @@ const HomePage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredHistory = getFilteredHistory(searchTerm);
+
+  // 檢查管理員密碼
+  const checkAdminPassword = () => {
+    const envPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+    if (adminPassword === envPassword) {
+      setIsAdminMode(true);
+      setShowAdminLogin(false);
+      setAdminPassword('');
+    } else {
+      alert('密碼錯誤');
+    }
+  };
+
+  // 登出管理員模式
+  const logoutAdmin = () => {
+    setIsAdminMode(false);
+    setEditingDatabase(null);
+    setShowAddDatabase(false);
+  };
 
   // 載入資料庫列表
   const loadDatabaseList = async () => {
@@ -113,6 +136,78 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const handleEditDatabase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDatabase || !newDatabase.name.trim() || !newDatabase.notion_db_id.trim()) return;
+
+    try {
+      await SavedDatabaseService.updateDatabase(editingDatabase.id, {
+        name: newDatabase.name.trim(),
+        notion_db_id: newDatabase.notion_db_id.trim(),
+        start_date: newDatabase.start_date || undefined,
+        end_date: newDatabase.end_date || undefined,
+        description: newDatabase.description.trim() || undefined
+      });
+      
+      // 重新載入資料庫列表
+      await loadDatabaseList();
+      
+      // 重置表單
+      setNewDatabase({
+        name: '',
+        notion_db_id: '',
+        start_date: '',
+        end_date: '',
+        description: ''
+      });
+      setEditingDatabase(null);
+      
+      alert('資料庫更新成功！');
+    } catch (error) {
+      console.error('Failed to update database:', error);
+      alert('更新失敗：請檢查 Supabase 設定');
+    }
+  };
+
+  const handleDeleteDatabase = async (database: SavedDatabase) => {
+    if (!confirm(`確定要刪除「${database.name}」嗎？`)) return;
+
+    try {
+      await SavedDatabaseService.deleteDatabase(database.id);
+      
+      // 重新載入資料庫列表
+      await loadDatabaseList();
+      
+      alert('資料庫刪除成功！');
+    } catch (error) {
+      console.error('Failed to delete database:', error);
+      alert('刪除失敗：請檢查 Supabase 設定');
+    }
+  };
+
+  const startEditDatabase = (database: SavedDatabase) => {
+    setEditingDatabase(database);
+    setNewDatabase({
+      name: database.name,
+      notion_db_id: database.notion_db_id,
+      start_date: database.start_date || '',
+      end_date: database.end_date || '',
+      description: database.description || ''
+    });
+    setShowAddDatabase(false);
+  };
+
+  const cancelEdit = () => {
+    setEditingDatabase(null);
+    setNewDatabase({
+      name: '',
+      notion_db_id: '',
+      start_date: '',
+      end_date: '',
+      description: ''
+    });
+  };
+
   const handleImportClick = () => {
     fileInputRef.current?.click();
   };
@@ -175,15 +270,52 @@ const HomePage: React.FC = () => {
         {/* Supabase Database List Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">常用資料庫</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-semibold text-gray-800">常用資料庫</h2>
+              {isAdminMode && (
+                <span className="flex items-center gap-1 px-2 py-1 text-xs bg-red-100 text-red-700 rounded-full">
+                  <Shield size={12} />
+                  管理員模式
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowAddDatabase(!showAddDatabase)}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-              >
-                <Plus size={16} />
-                新增資料庫
-              </button>
+              {!isAdminMode ? (
+                <button
+                  onClick={() => setShowAdminLogin(true)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <Eye size={16} />
+                  管理模式
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setShowAddDatabase(!showAddDatabase);
+                      setEditingDatabase(null);
+                      setNewDatabase({
+                        name: '',
+                        notion_db_id: '',
+                        start_date: '',
+                        end_date: '',
+                        description: ''
+                      });
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                  >
+                    <Plus size={16} />
+                    新增資料庫
+                  </button>
+                  <button
+                    onClick={logoutAdmin}
+                    className="flex items-center gap-2 px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    <EyeOff size={16} />
+                    退出管理
+                  </button>
+                </>
+              )}
               <button
                 onClick={loadDatabaseList}
                 disabled={isLoadingDatabases}
@@ -195,10 +327,44 @@ const HomePage: React.FC = () => {
             </div>
           </div>
 
-          {showAddDatabase && (
+          {/* Admin Login Modal */}
+          {showAdminLogin && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h3 className="font-medium text-gray-800 mb-3">管理員登入</h3>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  placeholder="請輸入管理員密碼"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onKeyPress={(e) => e.key === 'Enter' && checkAdminPassword()}
+                />
+                <button
+                  onClick={checkAdminPassword}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  登入
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAdminLogin(false);
+                    setAdminPassword('');
+                  }}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          )}
+
+          {(showAddDatabase || editingDatabase) && isAdminMode && (
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-medium text-gray-800 mb-3">新增常用資料庫</h3>
-              <form onSubmit={handleAddDatabase} className="space-y-4">
+              <h3 className="font-medium text-gray-800 mb-3">
+                {editingDatabase ? '編輯資料庫' : '新增常用資料庫'}
+              </h3>
+              <form onSubmit={editingDatabase ? handleEditDatabase : handleAddDatabase} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -268,11 +434,17 @@ const HomePage: React.FC = () => {
                     type="submit"
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                   >
-                    儲存
+                    {editingDatabase ? '更新' : '儲存'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAddDatabase(false)}
+                    onClick={() => {
+                      if (editingDatabase) {
+                        cancelEdit();
+                      } else {
+                        setShowAddDatabase(false);
+                      }
+                    }}
                     className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                   >
                     取消
@@ -305,12 +477,19 @@ const HomePage: React.FC = () => {
               {databases.map((database) => (
                 <div
                   key={database.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
-                  onClick={() => handleDatabaseClick(database)}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
                 >
-                  <div className="flex-1">
+                  <div 
+                    className="flex-1 cursor-pointer"
+                    onClick={() => handleDatabaseClick(database)}
+                  >
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-medium text-gray-800">{database.name}</h3>
+                      {editingDatabase?.id === database.id && (
+                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
+                          編輯中...
+                        </span>
+                      )}
                     </div>
                     {database.description && (
                       <p className="text-sm text-gray-600 mb-2">{database.description}</p>
@@ -331,6 +510,30 @@ const HomePage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {isAdminMode && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditDatabase(database);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                          title="編輯"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDatabase(database);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          title="刪除"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    )}
                     <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
                   </div>
                 </div>
