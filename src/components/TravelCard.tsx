@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { NotionItineraryItem } from '../types';
-import { DollarSign, Info, Trash2, Pencil, CheckSquare, BookOpen, MapPin } from 'lucide-react';
+import { DollarSign, Info, Trash2, Pencil, CheckSquare, BookOpen, MapPin, Eye, EyeOff } from 'lucide-react';
 import { renderTextWithLinks } from '../utils/text-renderer';
 import { useState, useEffect } from 'react';
 import { useUrlParams } from '../hooks/useUrlParams';
@@ -13,6 +13,8 @@ import { ApiServiceFactory } from '../services/api-service-factory';
 interface TravelCardProps {
   item: NotionItineraryItem;
   index: number;
+  isHidden?: boolean;
+  onToggleVisibility?: (pageId: string) => void;
 }
 
 // Simplified title section - only contains the title
@@ -30,7 +32,7 @@ const TitleSection = ({ item, hasImage }: { item: NotionItineraryItem; hasImage:
 };
 
 
-const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
+const TravelCard: React.FC<TravelCardProps> = ({ item, isHidden = false, onToggleVisibility }) => {
   const [imageError, setImageError] = useState(false);
   const [proxyError, setProxyError] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -64,7 +66,11 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
   return (
     <div className="group relative">
       <div className="transform transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1">
-        <div className="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden border border-secondary-100">
+        <div className={`bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden border ${
+          isHidden 
+            ? 'border-dashed border-gray-400 opacity-60' 
+            : 'border-secondary-100'
+        }`}>
           
           {/* Header: Image or White Placeholder, with Title Overlay */}
           <div className={`relative overflow-hidden ${hasImage && fieldVisibility.縮圖 ? 'h-40 sm:h-48' : 'h-14 sm:h-16'}`}>
@@ -96,9 +102,20 @@ const TravelCard: React.FC<TravelCardProps> = ({ item }) => {
             <TitleSection item={item} hasImage={hasImage && fieldVisibility.縮圖} />
           </div>
 
-          {/* Edit/Delete Icons */}
+          {/* Edit/Delete/Visibility Icons */}
           {mode === 'edit' && (
             <div className="absolute top-3 right-3 flex gap-2 z-20">
+              <button 
+                onClick={() => onToggleVisibility?.(item.id)}
+                className={`p-2.5 text-white rounded-xl shadow-floating hover:scale-110 transition-all duration-200 backdrop-blur-sm ${
+                  isHidden 
+                    ? 'bg-gray-500 hover:bg-gray-600' 
+                    : 'bg-green-500 hover:bg-green-600'
+                }`}
+                title={isHidden ? '顯示此項目' : '隱藏此項目'}
+              >
+                {isHidden ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
               <button 
                 onClick={() => setShowEditModal(true)}
                 className="p-2.5 bg-primary-500 text-white rounded-xl shadow-floating hover:bg-primary-600 hover:scale-110 transition-all duration-200 backdrop-blur-sm"

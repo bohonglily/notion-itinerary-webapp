@@ -132,3 +132,29 @@ export interface HistoryItem {
   lastVisited: string;
   visitCount: number;
 }
+
+// User personalization types
+export interface UserProfile {
+  user_id: string;        // 唯一識別符
+  display_name: string;   // 顯示名稱
+  created_at: string;     // 建立時間
+}
+
+export interface HiddenRule {
+  user_id: string;        // 關聯使用者
+  page_id: string;        // Notion page ID
+  hidden_at: string;      // 隱藏時間
+  database_id: string;    // 關聯特定資料庫
+}
+
+export interface UserSession {
+  user_id: string;
+  display_name: string;
+  hiddenItems: string[];  // 當前隱藏的 page_id 列表
+}
+
+export interface PersonalizationState {
+  currentUser?: UserSession;
+  isEditMode: boolean;
+  hiddenCount: number;
+}

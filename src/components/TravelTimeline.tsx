@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NotionItineraryItem } from '../types';
+import { NotionItineraryItem, UserSession } from '../types';
 import TravelCard from './TravelCard';
 import DayTabs from './DayTabs';
 import { useMode } from '../hooks/useMode';
@@ -15,13 +15,23 @@ interface TravelTimelineProps {
   selectedDay?: string | null; // 從 App 傳入的選中日期
   setSelectedDay?: (day: string) => void; // 從 App 傳入的日期設定函數
   isScrolled?: boolean; // 滾動狀態
+  // 個人化功能相關
+  currentUser?: UserSession | null;
+  onToggleItemVisibility?: (pageId: string) => void;
+  isItemHidden?: (pageId: string) => boolean;
+  filterItems?: (items: NotionItineraryItem[]) => NotionItineraryItem[];
 }
 
 const TravelTimeline: React.FC<TravelTimelineProps> = ({ 
   groupedItems, 
   selectedDay: propSelectedDay = null, 
   setSelectedDay: propSetSelectedDay = null,
-  isScrolled = false
+  isScrolled = false,
+  // 個人化功能 props
+  currentUser,
+  onToggleItemVisibility,
+  isItemHidden,
+  filterItems
 }) => {
   // 使用本地狀態作為後備，但優先使用從 App 傳入的狀態
   const [localSelectedDay, setLocalSelectedDay] = useState<string | null>(null);
@@ -101,7 +111,9 @@ const TravelTimeline: React.FC<TravelTimelineProps> = ({
     createItineraryItem(newItem);
   };
 
-  const currentItems = selectedDay ? groupedItems.get(selectedDay) || [] : [];
+  // 先獲取原始項目，然後應用個人化篩選
+  const rawCurrentItems = selectedDay ? groupedItems.get(selectedDay) || [] : [];
+  const currentItems = filterItems ? filterItems(rawCurrentItems) : rawCurrentItems;
 
 
   return (
@@ -147,7 +159,9 @@ const TravelTimeline: React.FC<TravelTimelineProps> = ({
               <TravelCard 
                 key={item.id} 
                 item={item} 
-                index={index} 
+                index={index}
+                isHidden={isItemHidden ? isItemHidden(item.id) : false}
+                onToggleVisibility={onToggleItemVisibility}
               />
             </React.Fragment>
           ))}

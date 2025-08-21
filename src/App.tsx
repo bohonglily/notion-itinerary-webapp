@@ -18,6 +18,8 @@ import { cacheService } from './services/cache-service'; // Import cacheService
 import { useVisibility } from './contexts/VisibilityContext';
 import { useScrollPosition } from './hooks/useScrollPosition';
 import MiniBottomBar from './components/MiniBottomBar';
+import { usePersonalization } from './hooks/usePersonalization';
+import UserPromptModal from './components/UserPromptModal';
 
 
 const AppContent: React.FC = () => {
@@ -28,6 +30,19 @@ const AppContent: React.FC = () => {
   const { mode, toggleMode } = useMode();
   const { isScrolled } = useScrollPosition(100); // 滾動監聽，100px 作為觸發閾值
   const [selectedDay, setSelectedDay] = useState<string | null>(null); // 提升日期狀態到 App 層級
+  
+  // 個人化功能
+  const {
+    currentUser,
+    isEditMode,
+    hiddenCount,
+    showUserPrompt,
+    createUser,
+    toggleItemVisibility,
+    isItemHidden,
+    filterItems,
+    setShowUserPrompt
+  } = usePersonalization(databaseId);
   
   const { data, groupedData, isLoading, error, reload } = useItinerary(databaseId || '', startDate, endDate);
   const [isProcessing, setIsProcessing] = useState(false); // New state for AI processing
@@ -191,6 +206,7 @@ const AppContent: React.FC = () => {
         itineraryData={data}
         onToggleAdminPanel={toggleAdminPanel}
         isScrolled={isScrolled}
+        currentUser={currentUser}
       />
       
       <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200">
@@ -208,6 +224,13 @@ const AppContent: React.FC = () => {
               </div>
             </div>
             
+            {/* 隱藏數量提示 - 一般模式下顯示 */}
+            {currentUser && !isEditMode && hiddenCount > 0 && (
+              <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full">
+                <EyeOff className="w-4 h-4" />
+                <span>{hiddenCount} 項已隱藏</span>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -218,6 +241,11 @@ const AppContent: React.FC = () => {
           selectedDay={selectedDay}
           setSelectedDay={handleDayChange}
           isScrolled={isScrolled}
+          // 個人化功能 props
+          currentUser={currentUser}
+          onToggleItemVisibility={toggleItemVisibility}
+          isItemHidden={isItemHidden}
+          filterItems={filterItems}
         />
       </main>
 
@@ -235,6 +263,13 @@ const AppContent: React.FC = () => {
           enhancementProgress={null} // Placeholder, replace with actual state if available
         />
       </Modal>
+
+      {/* User Prompt Modal */}
+      <UserPromptModal
+        isOpen={showUserPrompt}
+        onClose={() => setShowUserPrompt(false)}
+        onCreateUser={createUser}
+      />
     </div>
   );
 }

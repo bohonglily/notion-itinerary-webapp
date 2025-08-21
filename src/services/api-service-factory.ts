@@ -13,6 +13,10 @@ export interface ApiEndpoints {
   notionBulkUpdate: string;
   notionDatabaseInfo: string;
   imageProxy: string;
+  userCreate: string;
+  userList: string;
+  hiddenRulesGet: string;
+  hiddenRulesToggle: string;
 }
 
 export class ApiServiceFactory {
@@ -92,6 +96,10 @@ export class ApiServiceFactory {
       notionBulkUpdate: `${basePath}/notion-bulk-update`,
       notionDatabaseInfo: `${basePath}/notion-database-info`,
       imageProxy: `${basePath}/image-proxy`,
+      userCreate: `${basePath}/user-create`,
+      userList: `${basePath}/user-list`,
+      hiddenRulesGet: `${basePath}/hidden-rules-get`,
+      hiddenRulesToggle: `${basePath}/hidden-rules-toggle`,
     };
   }
 
