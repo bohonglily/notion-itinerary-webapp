@@ -1,5 +1,5 @@
 import { UserProfile, UserSession, HiddenRule } from '../types';
-import { apiServiceFactory } from './api-service-factory';
+import { ApiServiceFactory } from './api-service-factory';
 
 class UserService {
   private readonly USER_STORAGE_KEY = 'itinerary-user';
@@ -72,7 +72,7 @@ class UserService {
    */
   async loadUserHiddenRules(userId: string, databaseId: string): Promise<string[]> {
     try {
-      const endpoint = apiServiceFactory.getEndpoint('hidden-rules-get');
+      const endpoint = ApiServiceFactory.getInstance().getEndpoint('hiddenRulesGet');
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -101,7 +101,7 @@ class UserService {
    */
   async toggleItemVisibility(userId: string, pageId: string, databaseId: string, isHidden: boolean): Promise<void> {
     try {
-      const endpoint = apiServiceFactory.getEndpoint('hidden-rules-toggle');
+      const endpoint = ApiServiceFactory.getInstance().getEndpoint('hiddenRulesToggle');
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -160,7 +160,7 @@ class UserService {
    */
   private async saveUserToDatabase(userProfile: UserProfile): Promise<void> {
     try {
-      const endpoint = apiServiceFactory.getEndpoint('user-create');
+      const endpoint = ApiServiceFactory.getInstance().getEndpoint('userCreate');
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -183,7 +183,7 @@ class UserService {
    */
   async getUserList(databaseId: string): Promise<UserProfile[]> {
     try {
-      const endpoint = apiServiceFactory.getEndpoint('user-list');
+      const endpoint = ApiServiceFactory.getInstance().getEndpoint('userList');
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
