@@ -60,13 +60,22 @@ const UserSelectorModal: React.FC<UserSelectorModalProps> = ({
   };
 
   const handleUserSelect = (userId: string) => {
+    console.log('UserSelectorModal - handleUserSelect called with userId:', userId);
+    
     // 更新 URL 參數
     const currentUrl = new URL(window.location.href);
     currentUrl.searchParams.set('user', userId);
-    window.history.pushState({}, '', currentUrl.toString());
+    const newUrl = currentUrl.toString();
     
-    // 重新載入頁面以套用新的使用者設定
-    window.location.reload();
+    console.log('UserSelectorModal - updating URL from', window.location.href, 'to', newUrl);
+    window.history.pushState({}, '', newUrl);
+    
+    // 觸發自定義事件通知 URL 參數已更新
+    console.log('UserSelectorModal - dispatching urlParamsChanged event');
+    window.dispatchEvent(new CustomEvent('urlParamsChanged'));
+    
+    // 關閉模態框
+    onClose();
   };
 
   const handleCreateNew = () => {

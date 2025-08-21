@@ -61,7 +61,7 @@ const MiniBottomBar: React.FC<MiniBottomBarProps> = ({
           translate-y-0
         `}
       >
-        <div className="max-w-5xl mx-auto px-8 py-1.5">
+        <div className="max-w-5xl mx-auto px-4 py-1.5">
           <div className="grid grid-cols-3 items-center">
             {/* 左側：滾動時才顯示日期選擇器，為 iPhone 圓角留出空間 */}
             <div className="flex items-center justify-start ml-2">
@@ -84,11 +84,12 @@ const MiniBottomBar: React.FC<MiniBottomBarProps> = ({
               className="flex items-center justify-center gap-1.5 px-2 py-1 text-gray-600 hover:bg-gray-100/80 rounded-md transition-colors"
               aria-label="切換使用者"
             >
-              <User size={14} />
-              {currentUser && (
+              {currentUser ? (
                 <span className="text-sm font-medium">
                   {currentUser.display_name}
                 </span>
+              ) : (
+                <User size={14} />
               )}
             </button>
 

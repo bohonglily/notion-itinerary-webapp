@@ -20,19 +20,40 @@ export const usePersonalization = (databaseId: string | null) => {
     const initializeUser = async () => {
       let currentUser: UserSession | null = null;
 
+      console.log('Initializing user with:', { userId, databaseId });
+
       // 1. 檢查 URL 參數中的 userId
       if (userId) {
+        console.log('Found userId in URL:', userId);
         // 從 localStorage 檢查是否有匹配的使用者
         const storedUser = userService.getCurrentUser();
+        console.log('Stored user:', storedUser);
         if (storedUser && storedUser.user_id === userId) {
           currentUser = storedUser;
+          console.log('Using stored user');
         } else {
-          // URL 中的 userId 和 localStorage 不匹配，清除本地資料
-          userService.clearUser();
+          console.log('URL and stored user mismatch, trying to fetch user from database');
+          // 嘗試從 Supabase 載入使用者資料
+          try {
+            // 建立一個簡單的使用者會話（因為我們只有 user_id）
+            currentUser = {
+              user_id: userId,
+              display_name: userId, // 暫時使用 userId 作為顯示名稱
+              hiddenItems: []
+            };
+            // 直接保存完整的 user 到 localStorage
+            localStorage.setItem('user_session', JSON.stringify(currentUser));
+            console.log('Created temporary user session:', currentUser);
+          } catch (error) {
+            console.error('Failed to create user session:', error);
+            userService.clearUser();
+          }
         }
       } else {
+        console.log('No userId in URL, checking localStorage');
         // 2. 沒有 URL 參數，檢查 localStorage
         currentUser = userService.getCurrentUser();
+        console.log('Got user from localStorage:', currentUser);
       }
 
       // 3. 如果有使用者，載入其隱藏規則
@@ -46,6 +67,7 @@ export const usePersonalization = (databaseId: string | null) => {
         }
       }
 
+      console.log('Final currentUser before setState:', currentUser);
       setState(prev => ({
         ...prev,
         currentUser: currentUser || undefined,
@@ -95,7 +117,16 @@ export const usePersonalization = (databaseId: string | null) => {
    * 切換項目的隱藏狀態
    */
   const toggleItemVisibility = useCallback(async (pageId: string): Promise<void> => {
+    console.log('toggleItemVisibility called with:', { 
+      pageId, 
+      currentUser: state.currentUser, 
+      databaseId,
+      hasCurrentUser: !!state.currentUser,
+      hasDatabaseId: !!databaseId 
+    });
+    
     if (!state.currentUser || !databaseId) {
+      console.log('toggleItemVisibility: Missing currentUser or databaseId, showing user prompt');
       // 如果沒有使用者，顯示建立使用者提示
       setShowUserPrompt(true);
       return;
