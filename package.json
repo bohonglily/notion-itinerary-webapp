@@ -34,7 +34,9 @@
     "prebuild:staging": "npm run env:verify:staging",
     "prebuild:production": "npm run env:verify:production",
     "setup:vercel": "node scripts/setup-vercel.js",
-    "setup:env": "node scripts/verify-environment.js"
+    "setup:env": "node scripts/verify-environment.js",
+    "test:supabase": "node scripts/test-supabase.js",
+    "supabase:test": "npm run test:supabase"
   },
   "dependencies": {
     "@notionhq/client": "^2.3.0",

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { UserSession, PersonalizationState, NotionItineraryItem } from '../types';
-import { userService } from '../services/user-service';
+import { userService } from '../services/user-service-supabase';
 import { useUrlParams } from './useUrlParams';
 import { useMode } from './useMode';
 
@@ -77,6 +77,14 @@ export const usePersonalization = (databaseId: string | null) => {
         hiddenCount: 0
       }));
       setShowUserPrompt(false);
+
+      // 更新 URL 參數，加入 user 參數
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('user', newUser.user_id);
+      
+      // 使用 pushState 更新 URL 但不重新載入頁面
+      window.history.pushState({}, '', currentUrl.toString());
+      
     } catch (error) {
       console.error('Failed to create user:', error);
       throw error;

@@ -44,8 +44,8 @@ export const handler = async (event) => {
       };
     }
 
-    // 建構 Notion 頁面屬性
-    const properties = buildNotionProperties(item);
+    // 前端已經處理過格式轉換，直接使用傳來的 properties
+    const properties = item;
 
     console.log('Creating new page in database:', databaseId, 'with properties:', properties);
 

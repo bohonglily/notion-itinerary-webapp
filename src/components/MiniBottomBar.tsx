@@ -12,6 +12,7 @@ interface MiniBottomBarProps {
   onToggleAdminPanel: () => void;
   isScrolled: boolean; // 改為 isScrolled，表示是否滾動狀態
   currentUser?: UserSession | null; // 當前使用者
+  onShowUserSelector?: () => void; // 顯示使用者選擇器
 }
 
 const MiniBottomBar: React.FC<MiniBottomBarProps> = ({
@@ -21,7 +22,8 @@ const MiniBottomBar: React.FC<MiniBottomBarProps> = ({
   itineraryData,
   onToggleAdminPanel,
   isScrolled,
-  currentUser
+  currentUser,
+  onShowUserSelector
 }) => {
   const [showDaySelector, setShowDaySelector] = useState(false);
   const [showFieldVisibilityMenu, setShowFieldVisibilityMenu] = useState(false);
@@ -60,10 +62,10 @@ const MiniBottomBar: React.FC<MiniBottomBarProps> = ({
         `}
       >
         <div className="max-w-5xl mx-auto px-8 py-1.5">
-          <div className="flex items-center justify-between">
-            {/* 左側：滾動時才顯示日期選擇器，未滾動時顯示當前使用者，為 iPhone 圓角留出空間 */}
-            <div className="flex items-center ml-2">
-              {isScrolled ? (
+          <div className="grid grid-cols-3 items-center">
+            {/* 左側：滾動時才顯示日期選擇器，為 iPhone 圓角留出空間 */}
+            <div className="flex items-center justify-start ml-2">
+              {isScrolled && (
                 <button
                   onClick={() => setShowDaySelector(!showDaySelector)}
                   className="flex items-center gap-1.5 px-2 py-1 bg-primary-50 text-primary-700 rounded-md hover:bg-primary-100 transition-colors"
@@ -73,18 +75,25 @@ const MiniBottomBar: React.FC<MiniBottomBarProps> = ({
                   </span>
                   <ChevronDown size={14} className={`transition-transform ${showDaySelector ? 'rotate-180' : ''}`} />
                 </button>
-              ) : (
-                currentUser && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 text-gray-600">
-                    <User size={14} />
-                    <span className="text-sm font-medium">{currentUser.display_name}</span>
-                  </div>
-                )
               )}
             </div>
 
+            {/* 中間：使用者名稱或提示 - 固定在正中間 */}
+            <button
+              onClick={onShowUserSelector}
+              className="flex items-center justify-center gap-1.5 px-2 py-1 text-gray-600 hover:bg-gray-100/80 rounded-md transition-colors"
+              aria-label="切換使用者"
+            >
+              <User size={14} />
+              {currentUser && (
+                <span className="text-sm font-medium">
+                  {currentUser.display_name}
+                </span>
+              )}
+            </button>
+
             {/* 右側：功能按鈕群組 - 總是靠右顯示，為 iPhone 圓角留出空間 */}
-            <div className="flex items-center gap-1 mr-2">
+            <div className="flex items-center justify-end gap-1 mr-2">
               <button
                 onClick={toggleMode}
                 className="p-2 bg-gray-100/80 rounded-md hover:bg-gray-200/80 transition-colors"

@@ -29,3 +29,5 @@ dist-ssr
 
 .vercel
 pic/pic2.png
+sql/create_personalization_tables.sql
+sql/create_saved_databases_table.sql

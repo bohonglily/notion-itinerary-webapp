@@ -20,6 +20,7 @@ import { useScrollPosition } from './hooks/useScrollPosition';
 import MiniBottomBar from './components/MiniBottomBar';
 import { usePersonalization } from './hooks/usePersonalization';
 import UserPromptModal from './components/UserPromptModal';
+import UserSelectorModal from './components/UserSelectorModal';
 
 
 const AppContent: React.FC = () => {
@@ -27,6 +28,7 @@ const AppContent: React.FC = () => {
   const { addToHistory } = useHistory();
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false); // State for password prompt modal
   const [showAdminPanelModal, setShowAdminPanelModal] = useState(false); // State for AdminPanel modal
+  const [showUserSelector, setShowUserSelector] = useState(false); // State for user selector modal
   const { mode, toggleMode } = useMode();
   const { isScrolled } = useScrollPosition(100); // 滾動監聽，100px 作為觸發閾值
   const [selectedDay, setSelectedDay] = useState<string | null>(null); // 提升日期狀態到 App 層級
@@ -207,6 +209,7 @@ const AppContent: React.FC = () => {
         onToggleAdminPanel={toggleAdminPanel}
         isScrolled={isScrolled}
         currentUser={currentUser}
+        onShowUserSelector={() => setShowUserSelector(true)}
       />
       
       <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200">
@@ -269,6 +272,19 @@ const AppContent: React.FC = () => {
         isOpen={showUserPrompt}
         onClose={() => setShowUserPrompt(false)}
         onCreateUser={createUser}
+      />
+
+      {/* User Selector Modal */}
+      <UserSelectorModal
+        isOpen={showUserSelector}
+        onClose={() => setShowUserSelector(false)}
+        currentUserId={currentUser?.user_id}
+        databaseId={databaseId || ''}
+        onUserSelect={(userId) => {
+          // 處理使用者選擇邏輯在 UserSelectorModal 內部
+          setShowUserSelector(false);
+        }}
+        onCreateNewUser={() => setShowUserPrompt(true)}
       />
     </div>
   );

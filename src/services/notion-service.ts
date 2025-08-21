@@ -186,12 +186,24 @@ async getItineraryData(databaseId: string, startDate?: string | null, endDate?: 
 
   async createNotionPage(databaseId: string, properties: Record<string, unknown>): Promise<unknown> {
     const endpoint = this.apiFactory.getEndpoint('notionCreate');
-    return this._makeRequest(endpoint, 'POST', { databaseId, properties });
+    
+    // 根據平台使用不同的參數格式
+    const isNetlify = endpoint.includes('netlify');
+    const payload = isNetlify 
+      ? { databaseId, item: properties }  // Netlify 期望 item 參數
+      : { databaseId, properties };       // Vercel 期望 properties 參數
+      
+    return this._makeRequest(endpoint, 'POST', payload);
   }
 
   async deleteNotionPage(pageId: string): Promise<unknown> {
     const endpoint = this.apiFactory.getEndpoint('notionDelete');
-    return this._makeRequest(endpoint, 'POST', { pageId });
+    
+    // 根據平台使用不同的 HTTP 方法
+    const isNetlify = endpoint.includes('netlify');
+    const method = isNetlify ? 'DELETE' : 'POST';  // Netlify 使用 DELETE，Vercel 使用 POST
+      
+    return this._makeRequest(endpoint, method, { pageId });
   }
 
   async bulkUpdateImages(items: NotionItineraryItem[], imageUrls: string[]): Promise<unknown> {

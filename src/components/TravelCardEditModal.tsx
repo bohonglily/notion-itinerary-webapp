@@ -10,9 +10,10 @@ interface TravelCardEditModalProps {
   onClose: () => void;
   item: NotionItineraryItem;
   onSave: (updatedItem: NotionItineraryItem) => void;
+  title?: string;
 }
 
-const TravelCardEditModal: React.FC<TravelCardEditModalProps> = ({ isOpen, onClose, item, onSave }) => {
+const TravelCardEditModal: React.FC<TravelCardEditModalProps> = ({ isOpen, onClose, item, onSave, title = "編輯行程項目" }) => {
   const [editableItem, setEditableItem] = useState<NotionItineraryItem>(item);
 
   useEffect(() => {
@@ -45,7 +46,7 @@ const TravelCardEditModal: React.FC<TravelCardEditModalProps> = ({ isOpen, onClo
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="編輯行程項目" className={MODAL_WIDTH_CLASS} headerActions={headerActions}>
+    <Modal isOpen={isOpen} onClose={onClose} title={title} className={MODAL_WIDTH_CLASS} headerActions={headerActions}>
       <div className="p-4 space-y-4">
         <ItineraryFormFields item={editableItem} handleFieldChange={handleFieldChange} />
       </div>

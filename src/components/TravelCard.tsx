@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { NotionItineraryItem } from '../types';
-import { DollarSign, Info, Trash2, Pencil, CheckSquare, BookOpen, MapPin, Eye, EyeOff } from 'lucide-react';
+import { DollarSign, Info, Trash2, Pencil, CheckSquare, BookOpen, MapPin, Eye, EyeOff, Copy } from 'lucide-react';
 import { renderTextWithLinks } from '../utils/text-renderer';
 import { useState, useEffect } from 'react';
 import { useUrlParams } from '../hooks/useUrlParams';
@@ -36,10 +36,12 @@ const TravelCard: React.FC<TravelCardProps> = ({ item, isHidden = false, onToggl
   const [imageError, setImageError] = useState(false);
   const [proxyError, setProxyError] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [editModalData, setEditModalData] = useState<NotionItineraryItem | null>(null);
+  const [editMode, setEditMode] = useState<'edit' | 'copy'>('edit');
   const { databaseId, startDate, endDate } = useUrlParams();
   const { mode } = useMode();
   const { fieldVisibility } = useVisibility();
-  const { updateNotionPage, deleteItineraryItem } = useItinerary(databaseId || '', startDate, endDate);
+  const { updateNotionPage, deleteItineraryItem, createItineraryItem } = useItinerary(databaseId || '', startDate, endDate);
 
 
   const PathIcon = () => (
@@ -52,13 +54,34 @@ const TravelCard: React.FC<TravelCardProps> = ({ item, isHidden = false, onToggl
   }, [item]);
 
   const handleSave = (updatedItem: NotionItineraryItem) => {
-    updateNotionPage({ pageId: item.id, updatedItem });
+    if (editMode === 'copy') {
+      // 複製模式：建立新項目
+      const newItem = { ...updatedItem };
+      delete (newItem as any).id; // 移除 id，讓 Notion 生成新的
+      createItineraryItem(newItem);
+    } else {
+      // 編輯模式：更新現有項目
+      updateNotionPage({ pageId: item.id, updatedItem });
+    }
   };
 
   const handleDelete = () => {
     if (window.confirm(`確定要刪除「${item.項目}」嗎？`)) {
       deleteItineraryItem({ pageId: item.id });
     }
+  };
+
+  const handleCopy = () => {
+    // 建立複製的項目，保持原本標題
+    const copiedItem: NotionItineraryItem = {
+      ...item,
+      id: '', // 設為空字串，表示這是新項目
+    };
+    
+    // 設定編輯模式為複製，並傳入複製的資料
+    setEditMode('copy');
+    setEditModalData(copiedItem);
+    setShowEditModal(true);
   };
 
   const hasImage = !!item.縮圖網址 && !imageError;
@@ -117,11 +140,22 @@ const TravelCard: React.FC<TravelCardProps> = ({ item, isHidden = false, onToggl
                 {isHidden ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
               <button 
-                onClick={() => setShowEditModal(true)}
+                onClick={() => {
+                  setEditMode('edit');
+                  setEditModalData(item);
+                  setShowEditModal(true);
+                }}
                 className="p-2.5 bg-primary-500 text-white rounded-xl shadow-floating hover:bg-primary-600 hover:scale-110 transition-all duration-200 backdrop-blur-sm"
                 title="編輯"
               >
                 <Pencil size={18} />
+              </button>
+              <button 
+                onClick={handleCopy}
+                className="p-2.5 bg-blue-500 text-white rounded-xl shadow-floating hover:bg-blue-600 hover:scale-110 transition-all duration-200 backdrop-blur-sm"
+                title="複製"
+              >
+                <Copy size={18} />
               </button>
               <button 
                 onClick={handleDelete}
@@ -259,9 +293,14 @@ const TravelCard: React.FC<TravelCardProps> = ({ item, isHidden = false, onToggl
       </div>
       <TravelCardEditModal 
         isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        item={item}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditModalData(null);
+          setEditMode('edit');
+        }}
+        item={editModalData || item}
         onSave={handleSave}
+        title={editMode === 'copy' ? '複製行程項目' : '編輯行程項目'}
       />
     </div>
   );
