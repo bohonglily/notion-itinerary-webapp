@@ -251,9 +251,10 @@ const reloadMutation = useMutation({
         if (!old) return old;
         const updatedItems = old.items.map(item => {
           if (item.id === pageId) {
-            // 只更新有值的屬性，避免 undefined 覆蓋現有值
+            // 更新所有屬性，包含空值（允許清空欄位）
+            // 只排除 undefined，但保留空字串和 null
             const cleanUpdatedItem = Object.fromEntries(
-              Object.entries(updatedItem).filter(([_, value]) => value !== undefined && value !== null)
+              Object.entries(updatedItem).filter(([_, value]) => value !== undefined)
             );
             const newItem = { ...item, ...cleanUpdatedItem };
             return newItem;

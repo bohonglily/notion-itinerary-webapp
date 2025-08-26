@@ -103,14 +103,60 @@ export class NotionService {
     if (item.項目) properties['項目'] = { title: [{ text: { content: item.項目 } }] };
     if (item.日期) properties['日期'] = { date: { start: item.日期 } };
     if (item.時段 && item.時段.length > 0) properties['時段'] = { multi_select: item.時段.map(name => ({ name })) };
-    if (item.景點介紹) properties['景點介紹'] = { rich_text: [{ text: { content: item.景點介紹 } }] };
+    
+    // 處理 rich_text 欄位，包含空字串的情況
+    if (item.景點介紹 !== undefined) {
+      if (item.景點介紹) {
+        properties['景點介紹'] = { rich_text: [{ text: { content: item.景點介紹 } }] };
+      } else {
+        properties['景點介紹'] = { rich_text: [] };
+      }
+    }
+    
     if (item.縮圖網址) properties['縮圖網址'] = { url: item.縮圖網址 };
     if (item.GoogleMaps) properties['GoogleMaps'] = { url: item.GoogleMaps };
-        if (item.人均價 !== null && item.人均價 !== undefined) properties['人均價'] = { number: item.人均價 };
-    if (item.幣別) properties['幣別'] = { rich_text: [{ text: { content: item.幣別 } }] };
-    if (item.前往方式) properties['前往方式'] = { rich_text: [{ text: { content: item.前往方式 } }] };
-    if (item.重要資訊) properties['重要資訊'] = { rich_text: [{ text: { content: item.重要資訊 } }] };
-    if (item.待辦) properties['待辦'] = { rich_text: [{ text: { content: item.待辦 } }] };
+    if (item.人均價 !== null && item.人均價 !== undefined) properties['人均價'] = { number: item.人均價 };
+    
+    if (item.幣別 !== undefined) {
+      if (item.幣別) {
+        properties['幣別'] = { rich_text: [{ text: { content: item.幣別 } }] };
+      } else {
+        properties['幣別'] = { rich_text: [] };
+      }
+    }
+    
+    if (item.前往方式 !== undefined) {
+      if (item.前往方式) {
+        properties['前往方式'] = { rich_text: [{ text: { content: item.前往方式 } }] };
+      } else {
+        properties['前往方式'] = { rich_text: [] };
+      }
+    }
+    
+    if (item.重要資訊 !== undefined) {
+      if (item.重要資訊) {
+        properties['重要資訊'] = { rich_text: [{ text: { content: item.重要資訊 } }] };
+      } else {
+        properties['重要資訊'] = { rich_text: [] };
+      }
+    }
+    
+    if (item.參考資料 !== undefined) {
+      if (item.參考資料) {
+        properties['參考資料'] = { rich_text: [{ text: { content: item.參考資料 } }] };
+      } else {
+        properties['參考資料'] = { rich_text: [] };
+      }
+    }
+    
+    if (item.待辦 !== undefined) {
+      if (item.待辦) {
+        properties['待辦'] = { rich_text: [{ text: { content: item.待辦 } }] };
+      } else {
+        properties['待辦'] = { rich_text: [] };
+      }
+    }
+    
     if (item.排序 !== null && item.排序 !== undefined) properties['排序'] = { number: item.排序 };
     return properties;
   }
