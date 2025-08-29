@@ -43,7 +43,7 @@ const TravelTimeline: React.FC<TravelTimelineProps> = ({
   const sortedDays = Array.from(groupedItems.keys()).sort((a, b) => a.localeCompare(b));
   
   // 滑動切換邏輯
-  const minSwipeDistance = 50;
+  const minSwipeDistance = 100;
   
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
