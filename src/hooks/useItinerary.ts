@@ -121,10 +121,16 @@ export const useItinerary = (databaseId: string, startDate?: string | null, endD
 
 const reloadMutation = useMutation({
     mutationFn: async () => {
-      queryClient.invalidateQueries({ queryKey: ['itinerary', databaseId, startDate, endDate] });
+      // 先清除快取，確保重新取得最新資料
+      cacheService.clearItinerary(databaseId, startDate, endDate);
+      // 強制重新查詢，確保使用當前的日期參數
+      await queryClient.refetchQueries({
+        queryKey: ['itinerary', databaseId, startDate, endDate],
+        exact: true
+      });
     },
     onSuccess: () => {
-      // Invalidation will trigger the queryFn to refetch if needed
+      logger.info('ITINERARY_HOOK', 'Manual reload completed', { databaseId, startDate, endDate });
     }
   });
 
