@@ -72,20 +72,40 @@ export const handler = async (event) => {
 
     // 如果有日期範圍，添加篩選條件
     if (startDate || endDate) {
-      queryBody.filter = {
-        property: '日期',
-        date: {}
-      };
-
       if (startDate && endDate) {
-        queryBody.filter.date = {
-          on_or_after: startDate,
-          on_or_before: endDate
+        // 當有開始和結束日期時，使用 and 條件
+        queryBody.filter = {
+          "and": [
+            {
+              "property": "日期",
+              "date": {
+                "on_or_after": startDate
+              }
+            },
+            {
+              "property": "日期",
+              "date": {
+                "on_or_before": endDate
+              }
+            }
+          ]
         };
       } else if (startDate) {
-        queryBody.filter.date.on_or_after = startDate;
+        // 只有開始日期
+        queryBody.filter = {
+          "property": "日期",
+          "date": {
+            "on_or_after": startDate
+          }
+        };
       } else if (endDate) {
-        queryBody.filter.date.on_or_before = endDate;
+        // 只有結束日期
+        queryBody.filter = {
+          "property": "日期",
+          "date": {
+            "on_or_before": endDate
+          }
+        };
       }
     }
 
