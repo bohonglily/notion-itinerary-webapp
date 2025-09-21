@@ -53,7 +53,12 @@ export const useItinerary = (databaseId: string, startDate?: string | null, endD
           });
 
           if (cachedTime >= latestTime) {
-            logger.info('ITINERARY_HOOK', 'Using cached data');
+            logger.info('ITINERARY_HOOK', 'Using cached data', {
+              cacheKey: `${databaseId}-${startDate || 'no-start'}-${endDate || 'no-end'}`,
+              cachedItemCount: cachedData?.items?.length,
+              startDate,
+              endDate
+            });
             return cachedData;
           }
         }

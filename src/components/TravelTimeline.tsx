@@ -29,8 +29,8 @@ const TravelTimeline: React.FC<TravelTimelineProps> = ({
   const setSelectedDay = propSetSelectedDay || setLocalSelectedDay;
   const [showAddModal, setShowAddModal] = useState(false);
   const { mode } = useMode();
-  const { databaseId } = useUrlParams();
-  const { createItineraryItem } = useItinerary(databaseId || '');
+  const { databaseId, startDate, endDate } = useUrlParams();
+  const { createItineraryItem } = useItinerary(databaseId || '', startDate, endDate);
   const timelineRef = useRef<HTMLDivElement>(null);
   
   // 檢測是否為觸控設備

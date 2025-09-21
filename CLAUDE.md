@@ -269,7 +269,7 @@ VITE_AI_PROVIDER=gemini  # 預設 AI 提供商
 
 ### 一般使用者
 1. **基本存取**：`https://your-domain.com?db=notion_database_id`
-2. **日期篩選**：`?db=database_id&start=2024-01-01&end=2024-01-31`
+2. **日期篩選**：`?databaseId=database_id&startDate=2024-01-01&endDate=2024-01-31`
 
 ### 管理者模式
 1. 點擊右下角設定選單
