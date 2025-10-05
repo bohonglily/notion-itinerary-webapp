@@ -111,34 +111,56 @@ export const handler = async (event) => {
 
     console.log('Querying Notion database:', databaseId, 'with filters:', queryBody);
 
-    // 呼叫 Notion API
-    const notionResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${notionApiKey}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(queryBody)
-    });
+    // 分頁處理：持續抓取直到沒有更多資料
+    let allResults = [];
+    let hasMore = true;
+    let nextCursor = null;
+    let pageCount = 0;
 
-    if (!notionResponse.ok) {
-      const errorText = await notionResponse.text();
-      console.error('Notion API error:', errorText);
-      return {
-        statusCode: notionResponse.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({ 
-          error: 'Notion API error',
-          details: errorText
-        })
+    while (hasMore) {
+      pageCount++;
+      const currentQuery = {
+        ...queryBody,
+        ...(nextCursor ? { start_cursor: nextCursor } : {})
       };
+
+      console.log(`Fetching page ${pageCount}${nextCursor ? ` with cursor: ${nextCursor}` : ''}`);
+
+      const notionResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${notionApiKey}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(currentQuery)
+      });
+
+      if (!notionResponse.ok) {
+        const errorText = await notionResponse.text();
+        console.error('Notion API error:', errorText);
+        return {
+          statusCode: notionResponse.status,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          },
+          body: JSON.stringify({
+            error: 'Notion API error',
+            details: errorText
+          })
+        };
+      }
+
+      const notionData = await notionResponse.json();
+      allResults = [...allResults, ...notionData.results];
+      hasMore = notionData.has_more;
+      nextCursor = notionData.next_cursor;
+
+      console.log(`Page ${pageCount}: fetched ${notionData.results.length} items, total: ${allResults.length}, has_more: ${hasMore}`);
     }
 
-    const notionData = await notionResponse.json();
+    console.log(`Completed fetching all pages. Total items: ${allResults.length}`);
 
     // 同時取得資料庫資訊以獲得名稱
     const dbInfoResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
@@ -160,14 +182,14 @@ export const handler = async (event) => {
     }
 
     // 轉換 Notion 資料格式
-    const transformedData = notionData.results.map(page => {
+    const transformedData = allResults.map(page => {
       const properties = page.properties;
-      
+
       // 調試：記錄參考資料的原始結構
       if (properties.參考資料?.rich_text?.length > 0) {
         console.log('參考資料 rich_text structure:', JSON.stringify(properties.參考資料.rich_text, null, 2));
       }
-      
+
       return {
         id: page.id,
         項目: properties.項目?.title?.[0]?.plain_text || '',
@@ -204,8 +226,8 @@ export const handler = async (event) => {
       },
       body: JSON.stringify({
         results: transformedData,
-        has_more: notionData.has_more,
-        next_cursor: notionData.next_cursor,
+        has_more: false, // 已經抓取所有資料，設為 false
+        next_cursor: null, // 已經抓取所有資料，設為 null
         databaseName: databaseName,
         databaseLastEditedTime: databaseLastEditedTime
       })
